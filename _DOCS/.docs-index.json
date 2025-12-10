@@ -1,0 +1,264 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-04T06:32:00.504Z",
+  "documents": [
+    {
+      "id": "MDAtU1RBUlQtSEVSRS5tZA==",
+      "path": "00-START-HERE.md",
+      "fullPath": "D:\\0.PROJECTS\\02-SABO-ECOSYSTEM\\sabo-hub\\sabohub-nexus\\_DOCS\\00-START-HERE.md",
+      "title": "SABOHUB Nexus Documentation",
+      "description": "",
+      "category": "ARCHITECTURE",
+      "categoryIcon": "🏗️",
+      "status": "active",
+      "tags": [
+        "react",
+        "typescript",
+        "supabase",
+        "api",
+        "ai"
+      ],
+      "size": 1657,
+      "lines": 61,
+      "words": 261,
+      "createdAt": "2025-11-29T07:02:16.434Z",
+      "modifiedAt": "2025-11-29T07:15:59.781Z",
+      "ageInDays": 5
+    },
+    {
+      "id": "MDEtQVJDSElURUNUVVJFXFNZU1RFTV9BUkNISVRFQ1RVUkUubWQ=",
+      "path": "01-ARCHITECTURE\\SYSTEM_ARCHITECTURE.md",
+      "fullPath": "D:\\0.PROJECTS\\02-SABO-ECOSYSTEM\\sabo-hub\\sabohub-nexus\\_DOCS\\01-ARCHITECTURE\\SYSTEM_ARCHITECTURE.md",
+      "title": "\udfd7 SABOHUB Nexus - System Architecture",
+      "description": "",
+      "category": "ARCHITECTURE",
+      "categoryIcon": "🏗️",
+      "status": "active",
+      "tags": [
+        "react",
+        "typescript",
+        "supabase",
+        "api",
+        "database",
+        "ai",
+        "auth"
+      ],
+      "size": 11976,
+      "lines": 204,
+      "words": 828,
+      "createdAt": "2025-11-29T07:02:16.557Z",
+      "modifiedAt": "2025-11-29T07:15:59.781Z",
+      "ageInDays": 5
+    },
+    {
+      "id": "MDItRkVBVFVSRVNcQ09SRV9GRUFUVVJFUy5tZA==",
+      "path": "02-FEATURES\\CORE_FEATURES.md",
+      "fullPath": "D:\\0.PROJECTS\\02-SABO-ECOSYSTEM\\sabo-hub\\sabohub-nexus\\_DOCS\\02-FEATURES\\CORE_FEATURES.md",
+      "title": "SABOHUB Nexus - Core Features",
+      "description": "",
+      "category": "FEATURES",
+      "categoryIcon": "✨",
+      "status": "active",
+      "tags": [
+        "react",
+        "typescript",
+        "ai",
+        "email"
+      ],
+      "size": 8952,
+      "lines": 243,
+      "words": 838,
+      "createdAt": "2025-11-29T07:02:17.214Z",
+      "modifiedAt": "2025-11-29T07:15:59.781Z",
+      "ageInDays": 5
+    },
+    {
+      "id": "MDUtR1VJREVTXFFVSUNLX1NUQVJULm1k",
+      "path": "05-GUIDES\\QUICK_START.md",
+      "fullPath": "D:\\0.PROJECTS\\02-SABO-ECOSYSTEM\\sabo-hub\\sabohub-nexus\\_DOCS\\05-GUIDES\\QUICK_START.md",
+      "title": "SABOHUB Nexus - Quick Start Guide",
+      "description": "",
+      "category": "GUIDES",
+      "categoryIcon": "📖",
+      "status": "active",
+      "tags": [
+        "react",
+        "typescript",
+        "supabase",
+        "api",
+        "ai",
+        "auth",
+        "deploy"
+      ],
+      "size": 5828,
+      "lines": 236,
+      "words": 650,
+      "createdAt": "2025-11-29T07:02:21.917Z",
+      "modifiedAt": "2025-11-29T07:15:59.781Z",
+      "ageInDays": 5
+    },
+    {
+      "id": "SU5WRVNUT1JfUElUQ0gubWQ=",
+      "path": "INVESTOR_PITCH.md",
+      "fullPath": "D:\\0.PROJECTS\\02-SABO-ECOSYSTEM\\sabo-hub\\sabohub-nexus\\_DOCS\\INVESTOR_PITCH.md",
+      "title": "\udfb1 SABOHUB Nexus - Investment Overview",
+      "description": "",
+      "category": "ARCHITECTURE",
+      "categoryIcon": "🏗️",
+      "status": "active",
+      "tags": [
+        "react",
+        "typescript",
+        "supabase",
+        "database",
+        "ai",
+        "auth",
+        "deploy"
+      ],
+      "size": 7314,
+      "lines": 201,
+      "words": 702,
+      "createdAt": "2025-11-29T07:02:22.327Z",
+      "modifiedAt": "2025-11-29T07:15:59.781Z",
+      "ageInDays": 5
+    }
+  ],
+  "categories": {
+    "ARCHITECTURE": {
+      "keywords": [
+        "architecture",
+        "system",
+        "design",
+        "structure",
+        "diagram"
+      ],
+      "folder": "01-ARCHITECTURE",
+      "icon": "🏗️",
+      "priority": 1
+    },
+    "FEATURES": {
+      "keywords": [
+        "feature",
+        "complete",
+        "implementation",
+        "integration",
+        "setup"
+      ],
+      "folder": "02-FEATURES",
+      "icon": "✨",
+      "priority": 2
+    },
+    "OPERATIONS": {
+      "keywords": [
+        "operation",
+        "runbook",
+        "monitoring",
+        "alert",
+        "incident"
+      ],
+      "folder": "03-OPERATIONS",
+      "icon": "⚙️",
+      "priority": 3
+    },
+    "DEPLOYMENT": {
+      "keywords": [
+        "deploy",
+        "production",
+        "staging",
+        "ci",
+        "cd",
+        "pipeline"
+      ],
+      "folder": "04-DEPLOYMENT",
+      "icon": "🚀",
+      "priority": 4
+    },
+    "GUIDES": {
+      "keywords": [
+        "guide",
+        "tutorial",
+        "how-to",
+        "quickstart",
+        "getting-started"
+      ],
+      "folder": "05-GUIDES",
+      "icon": "📖",
+      "priority": 5
+    },
+    "AI": {
+      "keywords": [
+        "ai",
+        "llm",
+        "gpt",
+        "copilot",
+        "agent",
+        "rag",
+        "embedding"
+      ],
+      "folder": "06-AI",
+      "icon": "🤖",
+      "priority": 6
+    },
+    "API": {
+      "keywords": [
+        "api",
+        "endpoint",
+        "rest",
+        "graphql",
+        "webhook"
+      ],
+      "folder": "07-API",
+      "icon": "🔌",
+      "priority": 7
+    },
+    "DATABASE": {
+      "keywords": [
+        "database",
+        "migration",
+        "schema",
+        "sql",
+        "table"
+      ],
+      "folder": "08-DATABASE",
+      "icon": "🗄️",
+      "priority": 8
+    },
+    "REPORTS": {
+      "keywords": [
+        "report",
+        "bao_cao",
+        "summary",
+        "status",
+        "phase"
+      ],
+      "folder": "09-REPORTS",
+      "icon": "📊",
+      "priority": 9
+    },
+    "ARCHIVE": {
+      "keywords": [
+        "old",
+        "deprecated",
+        "archive",
+        "legacy"
+      ],
+      "folder": "99-ARCHIVE",
+      "icon": "📦",
+      "priority": 99
+    }
+  },
+  "stats": {
+    "total": 5,
+    "byCategory": {
+      "ARCHITECTURE": 3,
+      "FEATURES": 1,
+      "GUIDES": 1
+    },
+    "byStatus": {
+      "active": 5
+    },
+    "totalWords": 3279,
+    "totalLines": 945,
+    "avgAge": 5
+  }
+}

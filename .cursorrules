@@ -1,0 +1,34 @@
+# 🎯 SABOHUB NEXUS - Cursor AI Rules
+
+## 🔑 ENVIRONMENT VARIABLES
+
+**File `.env` có sẵn tại root folder với đầy đủ config:**
+- Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- App: `VITE_APP_NAME`, `VITE_APP_VERSION`, `VITE_ENVIRONMENT`
+- API: `VITE_API_URL`
+
+**QUAN TRỌNG:** Cursor AI PHẢI đọc được file `.env` để hỗ trợ cấu hình.
+File `.env` đã được whitelist trong `.cursorinclude`.
+
+## 📁 PROJECT STRUCTURE
+
+```
+sabohub-nexus/
+├── src/
+│   ├── components/        # UI components
+│   ├── pages/            # Route pages
+│   ├── contexts/          # React contexts (Auth)
+│   ├── lib/              # Utilities & Supabase client
+│   └── hooks/            # Custom hooks
+├── .env                  # Environment variables (MUST BE READABLE)
+└── .env.example          # Template
+```
+
+## 🛠️ TECH STACK
+
+- React 18 + TypeScript
+- Vite (Build tool)
+- Supabase (Backend)
+- TanStack Query (Data fetching)
+- shadcn/ui (UI components)
+

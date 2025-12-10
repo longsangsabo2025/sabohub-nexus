@@ -1,0 +1,13 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="48" fill="url(#gradient)"/>
+  <rect x="48" y="75" width="96" height="54" rx="6" fill="white"/>
+  <path d="M60 87H180M60 99H138M60 111H162" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="150" cy="48" r="24" fill="#F59E0B"/>
+  <text x="150" y="58" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="white">S</text>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#3B82F6"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -46,7 +46,7 @@ export const Hero = () => {
 
           {/* Subheadline */}
           <motion.p
-            className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto"
+            className="text-xl md:text-2xl text-foreground/80 mb-12 max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}

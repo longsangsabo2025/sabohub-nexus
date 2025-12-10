@@ -8,7 +8,7 @@ export const Footer = () => {
           {/* Company Info */}
           <div>
             <h3 className="text-2xl font-bold gradient-text mb-4">SABOHUB</h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-foreground/70 mb-4">
               Nền tảng quản lý thông minh cho doanh nghiệp dịch vụ
             </p>
             <div className="flex gap-4">
@@ -28,10 +28,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-lg mb-4 text-foreground">Sản Phẩm</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Tính năng</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Bảng giá</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Demo</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Tải xuống</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Tính năng</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Bảng giá</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Demo</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Tải xuống</a></li>
             </ul>
           </div>
 
@@ -39,10 +39,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-lg mb-4 text-foreground">Hỗ Trợ</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Trung tâm trợ giúp</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Hướng dẫn</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">API Docs</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Liên hệ</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Trung tâm trợ giúp</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Hướng dẫn</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">API Docs</a></li>
+              <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Liên hệ</a></li>
             </ul>
           </div>
 
@@ -50,15 +50,15 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-lg mb-4 text-foreground">Liên Hệ</h4>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2 text-muted-foreground">
+              <li className="flex items-start gap-2 text-foreground/70">
                 <Mail className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span>contact@sabohub.com</span>
               </li>
-              <li className="flex items-start gap-2 text-muted-foreground">
+              <li className="flex items-start gap-2 text-foreground/70">
                 <Phone className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span>+84 123 456 789</span>
               </li>
-              <li className="flex items-start gap-2 text-muted-foreground">
+              <li className="flex items-start gap-2 text-foreground/70">
                 <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span>Hà Nội, Việt Nam</span>
               </li>
@@ -67,7 +67,7 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-border text-center text-muted-foreground">
+        <div className="pt-8 border-t border-border text-center text-foreground/60">
           <p>&copy; 2025 SABOHUB. All rights reserved. Made with ❤️ in Vietnam</p>
         </div>
       </div>

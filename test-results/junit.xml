@@ -1,0 +1,64 @@
+<testsuites id="" name="" tests="5" failures="3" skipped="0" errors="0" time="9.279834000000001">
+<testsuite name="e2e-foundation.spec.ts" timestamp="2025-12-10T00:21:53.563Z" hostname="chromium" tests="1" failures="0" skipped="0" time="2.582" errors="0">
+<testcase name="CEO Authentication &amp; Dashboard › CEO can login successfully" classname="e2e-foundation.spec.ts" time="2.582">
+</testcase>
+</testsuite>
+<testsuite name="e2e-foundation.spec.ts" timestamp="2025-12-10T00:21:53.563Z" hostname="firefox" tests="1" failures="1" skipped="0" time="0.003" errors="0">
+<testcase name="CEO Authentication &amp; Dashboard › CEO can login successfully" classname="e2e-foundation.spec.ts" time="0.003">
+<failure message="e2e-foundation.spec.ts:32:3 CEO can login successfully" type="FAILURE">
+<![CDATA[  [firefox] › e2e-foundation.spec.ts:32:3 › CEO Authentication & Dashboard › CEO can login successfully 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\admin\AppData\Local\ms-playwright\firefox-1497\firefox\firefox.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="e2e-foundation.spec.ts" timestamp="2025-12-10T00:21:53.563Z" hostname="webkit" tests="1" failures="1" skipped="0" time="0.003" errors="0">
+<testcase name="CEO Authentication &amp; Dashboard › CEO can login successfully" classname="e2e-foundation.spec.ts" time="0.003">
+<failure message="e2e-foundation.spec.ts:32:3 CEO can login successfully" type="FAILURE">
+<![CDATA[  [webkit] › e2e-foundation.spec.ts:32:3 › CEO Authentication & Dashboard › CEO can login successfully 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\admin\AppData\Local\ms-playwright\webkit-2227\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="e2e-foundation.spec.ts" timestamp="2025-12-10T00:21:53.563Z" hostname="Mobile Chrome" tests="1" failures="0" skipped="0" time="2.555" errors="0">
+<testcase name="CEO Authentication &amp; Dashboard › CEO can login successfully" classname="e2e-foundation.spec.ts" time="2.555">
+</testcase>
+</testsuite>
+<testsuite name="e2e-foundation.spec.ts" timestamp="2025-12-10T00:21:53.563Z" hostname="Mobile Safari" tests="1" failures="1" skipped="0" time="0.003" errors="0">
+<testcase name="CEO Authentication &amp; Dashboard › CEO can login successfully" classname="e2e-foundation.spec.ts" time="0.003">
+<failure message="e2e-foundation.spec.ts:32:3 CEO can login successfully" type="FAILURE">
+<![CDATA[  [Mobile Safari] › e2e-foundation.spec.ts:32:3 › CEO Authentication & Dashboard › CEO can login successfully 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\admin\AppData\Local\ms-playwright\webkit-2227\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

@@ -44,7 +44,7 @@ export const Benefits = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text">Lợi Ích Vượt Trội</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-foreground/70 max-w-2xl mx-auto">
             Kết quả thực tế từ khách hàng sử dụng SABOHUB
           </p>
         </motion.div>
@@ -63,7 +63,7 @@ export const Benefits = () => {
                 <h3 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
                   {benefit.title}
                 </h3>
-                <p className="text-xl text-muted-foreground leading-relaxed">
+                <p className="text-xl text-foreground/70 leading-relaxed">
                   {benefit.description}
                 </p>
               </div>

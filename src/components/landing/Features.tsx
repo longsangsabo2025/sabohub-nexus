@@ -32,7 +32,7 @@ export const Features = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text">Tính Năng Nổi Bật</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-foreground/70 max-w-2xl mx-auto">
             Mọi thứ bạn cần để quản lý doanh nghiệp hiệu quả
           </p>
         </motion.div>
@@ -52,7 +52,7 @@ export const Features = () => {
                 <feature.icon className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-foreground">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+              <p className="text-foreground/70 leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>

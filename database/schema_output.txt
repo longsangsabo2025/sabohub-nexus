@@ -1,0 +1,1528 @@
+≡ƒöì Inspecting Supabase database schema...
+
+================================================================================
+≡ƒôè ALL TABLES IN PUBLIC SCHEMA
+================================================================================
+
+================================================================================
+≡ƒôï TABLE: accounting_transactions
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó type                           text                     NOT NULL   
+  ΓÇó amount                         numeric                     NOT NULL   
+  ΓÇó description                    text                     NOT NULL   
+  ΓÇó payment_method                 text                     NOT NULL   
+  ΓÇó date                           timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó category                       text                     NULL       
+  ΓÇó reference_id                   text                     NULL       
+  ΓÇó notes                          text                     NULL       
+  ΓÇó created_by                     uuid                     NOT NULL   
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó accounting_transactions_pkey
+  ΓÇó idx_accounting_branch
+  ΓÇó idx_accounting_company
+  ΓÇó idx_accounting_created_by
+  ΓÇó idx_accounting_date
+  ΓÇó idx_accounting_type
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó Users can view transactions in their company (SELECT)
+  ΓÇó Managers and CEOs can create transactions (INSERT)
+  ΓÇó Managers and CEOs can update transactions (UPDATE)
+  ΓÇó Only CEOs can delete transactions (DELETE)
+  ΓÇó ceo_accounting_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: activity_logs
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NULL       
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó user_id                        uuid                     NULL       
+  ΓÇó action                         text                     NOT NULL   
+  ΓÇó entity_type                    text                     NOT NULL   
+  ΓÇó entity_id                      uuid                     NULL       
+  ΓÇó description                    text                     NOT NULL   
+  ΓÇó metadata                       jsonb                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó activity_logs_pkey
+  ΓÇó idx_activity_logs_company
+  ΓÇó idx_activity_logs_created
+  ΓÇó idx_activity_logs_entity
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó user_id ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_activity_logs_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: ai_assistants
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó openai_assistant_id            text                     NULL       
+  ΓÇó openai_thread_id               text                     NULL       
+  ΓÇó name                           text                     NULL        DEFAULT 'AI Trß╗ú l├╜'::text
+  ΓÇó instructions                   text                     NULL       
+  ΓÇó model                          text                     NULL        DEFAULT 'gpt-4-turbo-preview'::text
+  ΓÇó settings                       jsonb                     NULL        DEFAULT '{}'::jsonb
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó ai_assistants_pkey
+  ΓÇó idx_ai_assistants_active
+  ΓÇó idx_ai_assistants_company
+  ΓÇó unique_company_assistant
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_ai_assistants_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: ai_messages
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó assistant_id                   uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó user_id                        uuid                     NULL       
+  ΓÇó role                           text                     NOT NULL   
+  ΓÇó content                        text                     NOT NULL   
+  ΓÇó attachments                    jsonb                     NULL        DEFAULT '[]'::jsonb
+  ΓÇó openai_message_id              text                     NULL       
+  ΓÇó openai_run_id                  text                     NULL       
+  ΓÇó analysis_type                  text                     NULL       
+  ΓÇó analysis_results               jsonb                     NULL       
+  ΓÇó prompt_tokens                  integer                     NULL        DEFAULT 0
+  ΓÇó completion_tokens              integer                     NULL        DEFAULT 0
+  ΓÇó total_tokens                   integer                     NULL        DEFAULT 0
+  ΓÇó estimated_cost                 numeric                     NULL        DEFAULT 0.00
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó ai_messages_pkey
+  ΓÇó idx_messages_assistant
+  ΓÇó idx_messages_company
+  ΓÇó idx_messages_user
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó assistant_id ΓåÆ ai_assistants(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_ai_messages_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: ai_recommendations
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó assistant_id                   uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó category                       text                     NOT NULL   
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó description                    text                     NOT NULL   
+  ΓÇó priority                       text                     NULL        DEFAULT 'medium'::text
+  ΓÇó confidence                     numeric                     NULL       
+  ΓÇó reasoning                      text                     NULL       
+  ΓÇó implementation_plan            text                     NULL       
+  ΓÇó estimated_effort               text                     NULL       
+  ΓÇó expected_impact                text                     NULL       
+  ΓÇó status                         text                     NULL        DEFAULT 'pending'::text
+  ΓÇó reviewed_by                    uuid                     NULL       
+  ΓÇó reviewed_at                    timestamp with time zone                     NULL       
+  ΓÇó metadata                       jsonb                     NULL        DEFAULT '{}'::jsonb
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó ai_recommendations_pkey
+  ΓÇó idx_recommendations_company
+  ΓÇó idx_recommendations_priority
+  ΓÇó idx_recommendations_status
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó assistant_id ΓåÆ ai_assistants(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_ai_recommendations_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: ai_uploaded_files
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó assistant_id                   uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó user_id                        uuid                     NULL       
+  ΓÇó file_name                      text                     NOT NULL   
+  ΓÇó file_type                      text                     NOT NULL   
+  ΓÇó file_size                      bigint                     NOT NULL   
+  ΓÇó mime_type                      text                     NULL       
+  ΓÇó file_url                       text                     NOT NULL   
+  ΓÇó openai_file_id                 text                     NULL       
+  ΓÇó status                         text                     NULL        DEFAULT 'uploaded'::text
+  ΓÇó error_message                  text                     NULL       
+  ΓÇó analysis_status                text                     NULL       
+  ΓÇó analysis_results               jsonb                     NULL       
+  ΓÇó extracted_text                 text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó analyzed_at                    timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó ai_uploaded_files_pkey
+  ΓÇó idx_files_assistant
+  ΓÇó idx_files_company
+  ΓÇó idx_files_status
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó assistant_id ΓåÆ ai_assistants(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_ai_uploaded_files_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: ai_usage_analytics
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó user_id                        uuid                     NULL       
+  ΓÇó action_type                    text                     NOT NULL   
+  ΓÇó total_tokens                   integer                     NULL        DEFAULT 0
+  ΓÇó estimated_cost                 numeric                     NULL        DEFAULT 0.00
+  ΓÇó metadata                       jsonb                     NULL        DEFAULT '{}'::jsonb
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó ai_usage_analytics_pkey
+  ΓÇó idx_usage_action_type
+  ΓÇó idx_usage_company_date
+  ΓÇó idx_usage_date
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_ai_usage_analytics_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: attendance
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó branch_id                      uuid                     NOT NULL   
+  ΓÇó user_id                        uuid                     NOT NULL   
+  ΓÇó shift_id                       uuid                     NULL       
+  ΓÇó check_in                       timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó check_out                      timestamp with time zone                     NULL       
+  ΓÇó check_in_location              text                     NULL       
+  ΓÇó check_out_location             text                     NULL       
+  ΓÇó check_in_photo_url             text                     NULL       
+  ΓÇó total_hours                    numeric                     NULL       
+  ΓÇó is_late                        boolean                     NULL        DEFAULT false
+  ΓÇó is_early_leave                 boolean                     NULL        DEFAULT false
+  ΓÇó notes                          text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+  ΓÇó employee_name                  text                     NULL       
+  ΓÇó employee_role                  text                     NULL       
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó check_in_latitude              double precision                     NULL       
+  ΓÇó check_in_longitude             double precision                     NULL       
+  ΓÇó check_out_latitude             double precision                     NULL       
+  ΓÇó check_out_longitude            double precision                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó attendance_pkey
+  ΓÇó idx_attendance_branch_id
+  ΓÇó idx_attendance_check_in
+  ΓÇó idx_attendance_company_date
+  ΓÇó idx_attendance_company_id
+  ΓÇó idx_attendance_deleted_at
+  ΓÇó idx_attendance_employee_name
+  ΓÇó idx_attendance_store_id
+  ΓÇó idx_attendance_store_user
+  ΓÇó idx_attendance_user_id
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó attendance_select_policy (SELECT)
+  ΓÇó attendance_insert_policy (INSERT)
+  ΓÇó attendance_update_policy (UPDATE)
+  ΓÇó attendance_delete_policy (DELETE)
+
+================================================================================
+≡ƒôï TABLE: bill_commissions
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó bill_id                        uuid                     NOT NULL   
+  ΓÇó employee_id                    uuid                     NOT NULL   
+  ΓÇó commission_rule_id             uuid                     NULL       
+  ΓÇó commission_percentage          numeric                     NOT NULL   
+  ΓÇó base_amount                    numeric                     NOT NULL   
+  ΓÇó commission_amount              numeric                     NOT NULL   
+  ΓÇó status                         text                     NOT NULL    DEFAULT 'pending'::text
+  ΓÇó approved_by                    uuid                     NULL       
+  ΓÇó approved_at                    timestamp with time zone                     NULL       
+  ΓÇó paid_by                        uuid                     NULL       
+  ΓÇó paid_at                        timestamp with time zone                     NULL       
+  ΓÇó payment_reference              text                     NULL       
+  ΓÇó notes                          text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó bill_commissions_pkey
+  ΓÇó idx_bill_commissions_bill_id
+  ΓÇó idx_bill_commissions_created_at
+  ΓÇó idx_bill_commissions_employee_id
+  ΓÇó idx_bill_commissions_paid_at
+  ΓÇó idx_bill_commissions_status
+  ΓÇó unique_bill_employee_commission
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó approved_by ΓåÆ users(id)
+  ΓÇó bill_id ΓåÆ bills(id)
+  ΓÇó commission_rule_id ΓåÆ commission_rules(id)
+  ΓÇó employee_id ΓåÆ users(id)
+  ΓÇó paid_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+================================================================================
+≡ƒôï TABLE: bills
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó store_name                     text                     NULL       
+  ΓÇó bill_number                    text                     NOT NULL   
+  ΓÇó bill_date                      timestamp with time zone                     NOT NULL   
+  ΓÇó total_amount                   numeric                     NOT NULL   
+  ΓÇó bill_image_url                 text                     NULL       
+  ΓÇó ocr_data                       jsonb                     NULL       
+  ΓÇó status                         text                     NOT NULL    DEFAULT 'pending'::text
+  ΓÇó uploaded_by                    uuid                     NOT NULL   
+  ΓÇó approved_by                    uuid                     NULL       
+  ΓÇó approved_at                    timestamp with time zone                     NULL       
+  ΓÇó notes                          text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó bills_pkey
+  ΓÇó idx_bills_bill_date
+  ΓÇó idx_bills_company_id
+  ΓÇó idx_bills_status
+  ΓÇó idx_bills_store_name
+  ΓÇó idx_bills_uploaded_by
+  ΓÇó unique_bill_number_per_company
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó approved_by ΓåÆ users(id)
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó uploaded_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_bills_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: branches
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NULL       
+  ΓÇó name                           text                     NOT NULL   
+  ΓÇó code                           text                     NULL       
+  ΓÇó address                        text                     NULL       
+  ΓÇó phone                          text                     NULL       
+  ΓÇó manager_id                     uuid                     NULL       
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó slug                           text                     NULL       
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+  ΓÇó email                          text                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó branches_company_id_code_key
+  ΓÇó branches_pkey
+  ΓÇó idx_branches_active
+  ΓÇó idx_branches_company
+  ΓÇó idx_branches_manager
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó manager_id ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó CEO can view branches (SELECT)
+  ΓÇó CEO can create branches (INSERT)
+  ΓÇó CEO can update branches (UPDATE)
+  ΓÇó ceo_branches_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: business_documents
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó type                           text                     NOT NULL   
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó document_number                text                     NOT NULL   
+  ΓÇó description                    text                     NULL       
+  ΓÇó file_url                       text                     NULL       
+  ΓÇó file_type                      text                     NULL       
+  ΓÇó file_size                      integer                     NULL       
+  ΓÇó issue_date                     date                     NOT NULL   
+  ΓÇó issued_by                      text                     NOT NULL   
+  ΓÇó expiry_date                    date                     NULL       
+  ΓÇó upload_date                    timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó uploaded_by                    uuid                     NOT NULL   
+  ΓÇó notes                          text                     NULL       
+  ΓÇó is_verified                    boolean                     NULL        DEFAULT false
+  ΓÇó verified_date                  timestamp with time zone                     NULL       
+  ΓÇó verified_by                    uuid                     NULL       
+  ΓÇó status                         text                     NULL        DEFAULT 'active'::text
+  ΓÇó renewal_date                   date                     NULL       
+  ΓÇó renewal_notes                  text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó business_documents_pkey
+  ΓÇó idx_business_documents_company_id
+  ΓÇó idx_business_documents_expiry_date
+  ΓÇó idx_business_documents_is_verified
+  ΓÇó idx_business_documents_status
+  ΓÇó idx_business_documents_type
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó uploaded_by ΓåÆ users(id)
+  ΓÇó verified_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó business_documents_select_policy (SELECT)
+  ΓÇó business_documents_insert_policy (INSERT)
+  ΓÇó business_documents_update_policy (UPDATE)
+  ΓÇó business_documents_delete_policy (DELETE)
+  ΓÇó ceo_business_docs_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: commission_rule_history
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó rule_id                        uuid                     NOT NULL   
+  ΓÇó changed_by                     uuid                     NOT NULL   
+  ΓÇó change_type                    text                     NOT NULL   
+  ΓÇó old_values                     jsonb                     NULL       
+  ΓÇó new_values                     jsonb                     NULL       
+  ΓÇó reason                         text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó commission_rule_history_pkey
+  ΓÇó idx_commission_rule_history_created_at
+  ΓÇó idx_commission_rule_history_rule_id
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó changed_by ΓåÆ users(id)
+  ΓÇó rule_id ΓåÆ commission_rules(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+================================================================================
+≡ƒôï TABLE: commission_rules
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó rule_name                      text                     NOT NULL   
+  ΓÇó description                    text                     NULL       
+  ΓÇó applies_to                     text                     NOT NULL    DEFAULT 'all'::text
+  ΓÇó role                           text                     NULL       
+  ΓÇó user_id                        uuid                     NULL       
+  ΓÇó commission_percentage          numeric                     NOT NULL   
+  ΓÇó min_bill_amount                numeric                     NULL        DEFAULT 0
+  ΓÇó max_bill_amount                numeric                     NULL       
+  ΓÇó is_active                      boolean                     NOT NULL    DEFAULT true
+  ΓÇó priority                       integer                     NULL        DEFAULT 0
+  ΓÇó effective_from                 date                     NOT NULL    DEFAULT CURRENT_DATE
+  ΓÇó effective_to                   date                     NULL       
+  ΓÇó created_by                     uuid                     NOT NULL   
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó commission_rules_pkey
+  ΓÇó idx_commission_rules_applies_to
+  ΓÇó idx_commission_rules_company_id
+  ΓÇó idx_commission_rules_effective_dates
+  ΓÇó idx_commission_rules_is_active
+  ΓÇó idx_commission_rules_priority
+  ΓÇó idx_commission_rules_role
+  ΓÇó idx_commission_rules_user_id
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó created_by ΓåÆ users(id)
+  ΓÇó user_id ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_commission_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: companies
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó name                           text                     NOT NULL   
+  ΓÇó business_type                  text                     NULL       
+  ΓÇó address                        text                     NULL       
+  ΓÇó phone                          text                     NULL       
+  ΓÇó email                          text                     NULL       
+  ΓÇó website                        text                     NULL       
+  ΓÇó tax_code                       text                     NULL       
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó description                    text                     NULL       
+  ΓÇó created_by                     uuid                     NULL       
+  ΓÇó check_in_latitude              double precision                     NULL       
+  ΓÇó check_in_longitude             double precision                     NULL       
+  ΓÇó check_in_radius                double precision                     NULL        DEFAULT 100.0
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+  ΓÇó legal_name                     text                     NULL       
+  ΓÇó owner_id                       uuid                     NULL       
+  ΓÇó primary_color                  text                     NULL        DEFAULT '#007AFF'::text
+  ΓÇó secondary_color                text                     NULL        DEFAULT '#5856D6'::text
+  ΓÇó settings                       jsonb                     NULL        DEFAULT '{"locale": "vi-VN", "currency": "VND", "timezone": "Asia/Ho_Chi_Minh"}'::jsonb
+
+≡ƒöæ INDEXES:
+  ΓÇó companies_pkey
+  ΓÇó idx_companies_active
+  ΓÇó idx_companies_business_type
+  ΓÇó idx_companies_deleted_at
+  ΓÇó idx_companies_name
+  ΓÇó unique_company_name
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó created_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+================================================================================
+≡ƒôï TABLE: daily_revenue
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó date                           date                     NOT NULL   
+  ΓÇó total_revenue                  numeric                     NULL        DEFAULT 0
+  ΓÇó total_orders                   integer                     NULL        DEFAULT 0
+  ΓÇó total_customers                integer                     NULL        DEFAULT 0
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó daily_revenue_company_id_branch_id_date_key
+  ΓÇó daily_revenue_pkey
+  ΓÇó idx_daily_revenue_branch
+  ΓÇó idx_daily_revenue_company
+  ΓÇó idx_daily_revenue_date
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_daily_revenue_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: daily_work_reports
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó employee_id                    uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó report_date                    date                     NOT NULL   
+  ΓÇó check_in_time                  timestamp with time zone                     NOT NULL   
+  ΓÇó check_out_time                 timestamp with time zone                     NOT NULL   
+  ΓÇó total_hours                    numeric                     NOT NULL   
+  ΓÇó tasks_summary                  text                     NULL       
+  ΓÇó achievements                   text                     NULL       
+  ΓÇó challenges                     text                     NULL       
+  ΓÇó notes                          text                     NULL       
+  ΓÇó employee_name                  text                     NULL       
+  ΓÇó employee_role                  text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó daily_work_reports_pkey
+  ΓÇó idx_daily_reports_branch_id
+  ΓÇó idx_daily_reports_company_id
+  ΓÇó idx_daily_reports_created_at
+  ΓÇó idx_daily_reports_date
+  ΓÇó idx_daily_reports_employee_id
+  ΓÇó unique_daily_report
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó employee_id ΓåÆ employees(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó CEO can delete all reports (DELETE)
+  ΓÇó CEO can insert reports (INSERT)
+  ΓÇó CEO can update all reports (UPDATE)
+  ΓÇó CEO can view all reports (SELECT)
+  ΓÇó Manager can delete branch reports (DELETE)
+  ΓÇó Manager can insert reports (INSERT)
+  ΓÇó Manager can update branch reports (UPDATE)
+  ΓÇó Manager can view branch reports (SELECT)
+  ΓÇó Staff can delete own reports (DELETE)
+  ΓÇó Staff can insert own reports (INSERT)
+  ΓÇó Staff can update own reports (UPDATE)
+  ΓÇó Staff can view own reports (SELECT)
+  ΓÇó ceo_delete_all_reports (DELETE)
+  ΓÇó ceo_insert_any_report (INSERT)
+  ΓÇó ceo_select_all_reports (SELECT)
+  ΓÇó ceo_update_all_reports (UPDATE)
+  ΓÇó manager_delete_branch_reports (DELETE)
+  ΓÇó manager_insert_branch_reports (INSERT)
+  ΓÇó manager_select_branch_reports (SELECT)
+  ΓÇó manager_update_branch_reports (UPDATE)
+  ΓÇó staff_delete_own_reports (DELETE)
+  ΓÇó staff_insert_own_reports (INSERT)
+  ΓÇó staff_select_own_reports (SELECT)
+  ΓÇó staff_update_own_reports (UPDATE)
+
+================================================================================
+≡ƒôï TABLE: employee_documents
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó employee_id                    uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó type                           text                     NOT NULL   
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó document_number                text                     NULL       
+  ΓÇó description                    text                     NULL       
+  ΓÇó file_url                       text                     NULL       
+  ΓÇó file_type                      text                     NULL       
+  ΓÇó file_size                      integer                     NULL       
+  ΓÇó issue_date                     timestamp with time zone                     NULL       
+  ΓÇó expiry_date                    timestamp with time zone                     NULL       
+  ΓÇó upload_date                    timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó uploaded_by                    uuid                     NOT NULL   
+  ΓÇó notes                          text                     NULL       
+  ΓÇó is_verified                    boolean                     NULL        DEFAULT false
+  ΓÇó verified_date                  timestamp with time zone                     NULL       
+  ΓÇó verified_by                    uuid                     NULL       
+  ΓÇó status                         text                     NULL        DEFAULT 'active'::text
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó employee_documents_pkey
+  ΓÇó idx_employee_documents_company_id
+  ΓÇó idx_employee_documents_employee_id
+  ΓÇó idx_employee_documents_expiry_date
+  ΓÇó idx_employee_documents_status
+  ΓÇó idx_employee_documents_type
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó employee_id ΓåÆ users(id)
+  ΓÇó uploaded_by ΓåÆ users(id)
+  ΓÇó verified_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó employee_documents_select_policy (SELECT)
+  ΓÇó employee_documents_insert_policy (INSERT)
+  ΓÇó employee_documents_update_policy (UPDATE)
+  ΓÇó employee_documents_delete_policy (DELETE)
+  ΓÇó ceo_employee_docs_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: employee_invitations
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó created_by                     uuid                     NOT NULL   
+  ΓÇó invitation_code                character varying(50)                 NOT NULL   
+  ΓÇó email                          character varying(255)                NULL       
+  ΓÇó role_type                      character varying(50)                 NOT NULL    DEFAULT 'staff'::character varying
+  ΓÇó max_uses                       integer                     NULL        DEFAULT 1
+  ΓÇó used_count                     integer                     NULL        DEFAULT 0
+  ΓÇó expires_at                     timestamp with time zone                     NOT NULL   
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó usage_limit                    integer                     NULL        DEFAULT 1
+  ΓÇó last_used_at                   timestamp with time zone                     NULL       
+  ΓÇó notes                          text                     NULL       
+  ΓÇó is_used                        boolean                     NULL        DEFAULT false
+
+≡ƒöæ INDEXES:
+  ΓÇó employee_invitations_invitation_code_key
+  ΓÇó employee_invitations_pkey
+  ΓÇó idx_employee_invitations_code
+  ΓÇó idx_employee_invitations_company
+  ΓÇó idx_employee_invitations_creator
+  ΓÇó idx_employee_invitations_expires
+  ΓÇó idx_invitations_code
+  ΓÇó idx_invitations_expires
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó created_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_invitations_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: employees
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó username                       character varying(50)                 NOT NULL   
+  ΓÇó password_hash                  text                     NOT NULL   
+  ΓÇó full_name                      text                     NOT NULL   
+  ΓÇó email                          text                     NULL       
+  ΓÇó phone                          text                     NULL       
+  ΓÇó avatar_url                     text                     NULL       
+  ΓÇó role                           text                     NOT NULL   
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_by_ceo_id              uuid                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó last_login_at                  timestamp with time zone                     NULL       
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó employees_pkey
+  ΓÇó idx_employees_branch_id
+  ΓÇó idx_employees_company_id
+  ΓÇó idx_employees_company_username
+  ΓÇó idx_employees_deleted_at
+  ΓÇó idx_employees_is_active
+  ΓÇó idx_employees_role
+  ΓÇó idx_employees_username
+  ΓÇó unique_username_per_company
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_create_employees (INSERT)
+  ΓÇó ceo_delete_employees (DELETE)
+  ΓÇó ceo_select_employees (SELECT)
+  ΓÇó ceo_view_all_employees (SELECT)
+  ΓÇó ceo_update_employees (UPDATE)
+  ΓÇó ceo_employees_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: labor_contracts
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó employee_id                    uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó contract_type                  text                     NOT NULL   
+  ΓÇó contract_number                text                     NOT NULL   
+  ΓÇó position                       text                     NOT NULL   
+  ΓÇó department                     text                     NULL       
+  ΓÇó start_date                     date                     NOT NULL   
+  ΓÇó end_date                       date                     NULL       
+  ΓÇó probation_end_date             date                     NULL       
+  ΓÇó basic_salary                   numeric                     NULL       
+  ΓÇó allowances                     jsonb                     NULL       
+  ΓÇó benefits                       ARRAY                     NULL       
+  ΓÇó working_hours                  text                     NULL       
+  ΓÇó job_description                text                     NULL       
+  ΓÇó signed_date                    date                     NULL       
+  ΓÇó signed_location                text                     NULL       
+  ΓÇó file_url                       text                     NULL       
+  ΓÇó status                         text                     NULL        DEFAULT 'active'::text
+  ΓÇó notes                          text                     NULL       
+  ΓÇó created_by                     uuid                     NOT NULL   
+  ΓÇó created_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NOT NULL    DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_labor_contracts_company_id
+  ΓÇó idx_labor_contracts_contract_type
+  ΓÇó idx_labor_contracts_employee_id
+  ΓÇó idx_labor_contracts_end_date
+  ΓÇó idx_labor_contracts_status
+  ΓÇó labor_contracts_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó created_by ΓåÆ users(id)
+  ΓÇó employee_id ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó labor_contracts_select_policy (SELECT)
+  ΓÇó labor_contracts_insert_policy (INSERT)
+  ΓÇó labor_contracts_update_policy (UPDATE)
+  ΓÇó labor_contracts_delete_policy (DELETE)
+  ΓÇó ceo_contracts_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: manager_permissions
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó manager_id                     uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó can_view_overview              boolean                     NULL        DEFAULT true
+  ΓÇó can_view_employees             boolean                     NULL        DEFAULT true
+  ΓÇó can_view_tasks                 boolean                     NULL        DEFAULT true
+  ΓÇó can_view_documents             boolean                     NULL        DEFAULT false
+  ΓÇó can_view_ai_assistant          boolean                     NULL        DEFAULT false
+  ΓÇó can_view_attendance            boolean                     NULL        DEFAULT true
+  ΓÇó can_view_accounting            boolean                     NULL        DEFAULT false
+  ΓÇó can_view_employee_docs         boolean                     NULL        DEFAULT false
+  ΓÇó can_view_business_law          boolean                     NULL        DEFAULT false
+  ΓÇó can_view_settings              boolean                     NULL        DEFAULT false
+  ΓÇó can_create_employee            boolean                     NULL        DEFAULT false
+  ΓÇó can_edit_employee              boolean                     NULL        DEFAULT false
+  ΓÇó can_delete_employee            boolean                     NULL        DEFAULT false
+  ΓÇó can_create_task                boolean                     NULL        DEFAULT true
+  ΓÇó can_edit_task                  boolean                     NULL        DEFAULT true
+  ΓÇó can_delete_task                boolean                     NULL        DEFAULT false
+  ΓÇó can_approve_attendance         boolean                     NULL        DEFAULT true
+  ΓÇó can_edit_company_info          boolean                     NULL        DEFAULT false
+  ΓÇó granted_by                     uuid                     NULL       
+  ΓÇó granted_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó notes                          text                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_manager_permissions_company
+  ΓÇó idx_manager_permissions_manager
+  ΓÇó manager_permissions_manager_id_company_id_key
+  ΓÇó manager_permissions_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó granted_by ΓåÆ users(id)
+  ΓÇó manager_id ΓåÆ employees(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó CEO can view manager permissions (SELECT)
+  ΓÇó CEO can manage manager permissions (ALL)
+  ΓÇó Manager can view own permissions (SELECT)
+  ΓÇó CEO can view all manager permissions in their company (SELECT)
+  ΓÇó CEO can insert manager permissions in their company (INSERT)
+  ΓÇó CEO can update manager permissions in their company (UPDATE)
+  ΓÇó CEO can delete manager permissions in their company (DELETE)
+  ΓÇó Manager can view their own permissions (SELECT)
+
+================================================================================
+≡ƒôï TABLE: menu_items
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó name                           text                     NOT NULL   
+  ΓÇó description                    text                     NULL       
+  ΓÇó category                       text                     NOT NULL   
+  ΓÇó price                          numeric                     NOT NULL   
+  ΓÇó cost_price                     numeric                     NULL       
+  ΓÇó has_stock                      boolean                     NULL        DEFAULT false
+  ΓÇó current_stock                  numeric                     NULL        DEFAULT 0
+  ΓÇó min_stock                      numeric                     NULL        DEFAULT 0
+  ΓÇó unit                           text                     NULL        DEFAULT 'piece'::text
+  ΓÇó image_url                      text                     NULL       
+  ΓÇó is_available                   boolean                     NULL        DEFAULT true
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_menu_items_category
+  ΓÇó idx_menu_items_company
+  ΓÇó menu_items_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_menu_items_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: notifications
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó user_id                        uuid                     NOT NULL   
+  ΓÇó type                           text                     NOT NULL   
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó message                        text                     NOT NULL   
+  ΓÇó data                           jsonb                     NULL        DEFAULT '{}'::jsonb
+  ΓÇó is_read                        boolean                     NULL        DEFAULT false
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó read_at                        timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó notifications_created_at_idx
+  ΓÇó notifications_is_read_idx
+  ΓÇó notifications_pkey
+  ΓÇó notifications_type_idx
+  ΓÇó notifications_user_id_idx
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó user_id ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó Users can view their own notifications (SELECT)
+  ΓÇó Users can update their own notifications (UPDATE)
+  ΓÇó System can insert notifications (INSERT)
+  ΓÇó Users can delete their own notifications (DELETE)
+
+================================================================================
+≡ƒôï TABLE: order_items
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó order_id                       uuid                     NOT NULL   
+  ΓÇó menu_item_id                   uuid                     NOT NULL   
+  ΓÇó item_name                      text                     NOT NULL   
+  ΓÇó item_category                  text                     NOT NULL   
+  ΓÇó quantity                       integer                     NOT NULL   
+  ΓÇó unit_price                     numeric                     NOT NULL   
+  ΓÇó total_price                    numeric                     NOT NULL   
+  ΓÇó discount                       numeric                     NULL        DEFAULT 0
+  ΓÇó notes                          text                     NULL       
+  ΓÇó special_requests               text                     NULL       
+  ΓÇó status                         text                     NULL        DEFAULT 'pending'::text
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_order_items_menu_item
+  ΓÇó idx_order_items_order
+  ΓÇó order_items_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó menu_item_id ΓåÆ menu_items(id)
+  ΓÇó order_id ΓåÆ orders(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+================================================================================
+≡ƒôï TABLE: orders
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó store_id                       uuid                     NOT NULL   
+  ΓÇó table_id                       uuid                     NULL       
+  ΓÇó session_id                     uuid                     NULL       
+  ΓÇó order_number                   text                     NOT NULL   
+  ΓÇó customer_name                  text                     NULL       
+  ΓÇó customer_phone                 text                     NULL       
+  ΓÇó status                         text                     NOT NULL    DEFAULT 'pending'::text
+  ΓÇó subtotal                       numeric                     NULL        DEFAULT 0
+  ΓÇó tax                            numeric                     NULL        DEFAULT 0
+  ΓÇó discount                       numeric                     NULL        DEFAULT 0
+  ΓÇó total                          numeric                     NOT NULL   
+  ΓÇó notes                          text                     NULL       
+  ΓÇó cancellation_reason            text                     NULL       
+  ΓÇó created_by                     uuid                     NULL       
+  ΓÇó served_by                      uuid                     NULL       
+  ΓÇó ordered_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó prepared_at                    timestamp with time zone                     NULL       
+  ΓÇó completed_at                   timestamp with time zone                     NULL       
+  ΓÇó cancelled_at                   timestamp with time zone                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_orders_company
+  ΓÇó idx_orders_session
+  ΓÇó idx_orders_status
+  ΓÇó idx_orders_store
+  ΓÇó idx_orders_table
+  ΓÇó orders_order_number_key
+  ΓÇó orders_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó created_by ΓåÆ users(id)
+  ΓÇó served_by ΓåÆ users(id)
+  ΓÇó session_id ΓåÆ table_sessions(id)
+  ΓÇó table_id ΓåÆ tables(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_orders_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: profiles
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó user_id                        uuid                     NULL       
+  ΓÇó email                          text                     NULL       
+  ΓÇó full_name                      text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó profiles_pkey
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó Allow users to view own profile (ALL)
+
+================================================================================
+≡ƒôï TABLE: recurring_task_instances
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó template_id                    uuid                     NOT NULL   
+  ΓÇó task_id                        uuid                     NOT NULL   
+  ΓÇó scheduled_date                 date                     NOT NULL   
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_recurring_instances_date
+  ΓÇó idx_recurring_instances_task
+  ΓÇó idx_recurring_instances_template
+  ΓÇó recurring_task_instances_pkey
+  ΓÇó recurring_task_instances_template_id_scheduled_date_key
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó template_id ΓåÆ task_templates(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó recurring_instances_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: revenue_summary
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó period_type                    text                     NOT NULL   
+  ΓÇó period_start                   date                     NOT NULL   
+  ΓÇó period_end                     date                     NOT NULL   
+  ΓÇó total_revenue                  numeric                     NULL        DEFAULT 0
+  ΓÇó total_orders                   integer                     NULL        DEFAULT 0
+  ΓÇó total_customers                integer                     NULL        DEFAULT 0
+  ΓÇó avg_order_value                numeric                     NULL        DEFAULT 0
+  ΓÇó growth_percentage              numeric                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_revenue_summary_company
+  ΓÇó idx_revenue_summary_period
+  ΓÇó revenue_summary_company_id_branch_id_period_type_period_sta_key
+  ΓÇó revenue_summary_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_revenue_summary_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: table_sessions
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó table_id                       uuid                     NOT NULL   
+  ΓÇó store_id                       uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó session_number                 text                     NOT NULL   
+  ΓÇó customer_name                  text                     NULL       
+  ΓÇó customer_phone                 text                     NULL       
+  ΓÇó customer_count                 integer                     NULL        DEFAULT 1
+  ΓÇó start_time                     timestamp with time zone                     NOT NULL    DEFAULT now()
+  ΓÇó end_time                       timestamp with time zone                     NULL       
+  ΓÇó pause_time                     timestamp with time zone                     NULL       
+  ΓÇó resume_time                    timestamp with time zone                     NULL       
+  ΓÇó total_paused_minutes           integer                     NULL        DEFAULT 0
+  ΓÇó hourly_rate                    numeric                     NOT NULL   
+  ΓÇó table_amount                   numeric                     NULL        DEFAULT 0
+  ΓÇó orders_amount                  numeric                     NULL        DEFAULT 0
+  ΓÇó discount                       numeric                     NULL        DEFAULT 0
+  ΓÇó total_amount                   numeric                     NULL        DEFAULT 0
+  ΓÇó status                         text                     NOT NULL    DEFAULT 'active'::text
+  ΓÇó notes                          text                     NULL       
+  ΓÇó cancellation_reason            text                     NULL       
+  ΓÇó started_by                     uuid                     NULL       
+  ΓÇó ended_by                       uuid                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_sessions_status
+  ΓÇó idx_sessions_store
+  ΓÇó idx_sessions_table
+  ΓÇó table_sessions_pkey
+  ΓÇó table_sessions_session_number_key
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó ended_by ΓåÆ users(id)
+  ΓÇó started_by ΓåÆ users(id)
+  ΓÇó table_id ΓåÆ tables(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_table_sessions_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: tables
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó store_id                       uuid                     NOT NULL   
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó name                           text                     NOT NULL   
+  ΓÇó table_type                     text                     NOT NULL    DEFAULT 'standard'::text
+  ΓÇó hourly_rate                    numeric                     NULL        DEFAULT 0
+  ΓÇó status                         text                     NOT NULL    DEFAULT 'available'::text
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_tables_company
+  ΓÇó idx_tables_status
+  ΓÇó idx_tables_store
+  ΓÇó tables_pkey
+  ΓÇó tables_store_id_name_key
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_tables_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: task_approvals
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó description                    text                     NULL       
+  ΓÇó type                           text                     NOT NULL   
+  ΓÇó task_id                        uuid                     NULL       
+  ΓÇó submitted_by                   uuid                     NOT NULL   
+  ΓÇó approved_by                    uuid                     NULL       
+  ΓÇó status                         text                     NOT NULL    DEFAULT 'pending'::text
+  ΓÇó company_id                     uuid                     NULL       
+  ΓÇó submitted_at                   timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó reviewed_at                    timestamp with time zone                     NULL       
+  ΓÇó rejection_reason               text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_task_approvals_approved_by
+  ΓÇó idx_task_approvals_company_id
+  ΓÇó idx_task_approvals_status
+  ΓÇó idx_task_approvals_submitted_by
+  ΓÇó idx_task_approvals_type
+  ΓÇó task_approvals_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_task_approvals_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: task_attachments
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó task_id                        uuid                     NOT NULL   
+  ΓÇó file_name                      text                     NOT NULL   
+  ΓÇó file_url                       text                     NOT NULL   
+  ΓÇó file_size                      integer                     NULL       
+  ΓÇó file_type                      text                     NULL       
+  ΓÇó uploaded_by                    uuid                     NOT NULL   
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_task_attachments_task_id
+  ΓÇó idx_task_attachments_uploaded_by
+  ΓÇó task_attachments_pkey
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+================================================================================
+≡ƒôï TABLE: task_comments
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT uuid_generate_v4()
+  ΓÇó task_id                        uuid                     NOT NULL   
+  ΓÇó user_id                        uuid                     NOT NULL   
+  ΓÇó comment                        text                     NOT NULL   
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_task_comments_created_at
+  ΓÇó idx_task_comments_task_id
+  ΓÇó idx_task_comments_user_id
+  ΓÇó task_comments_pkey
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+================================================================================
+≡ƒôï TABLE: task_templates
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó company_id                     uuid                     NOT NULL   
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó description                    text                     NULL       
+  ΓÇó category                       text                     NOT NULL   
+  ΓÇó priority                       text                     NOT NULL   
+  ΓÇó recurrence_pattern             text                     NOT NULL   
+  ΓÇó scheduled_time                 time without time zone                     NULL       
+  ΓÇó scheduled_days                 ARRAY                     NULL       
+  ΓÇó assigned_role                  text                     NULL       
+  ΓÇó assigned_user_id               uuid                     NULL       
+  ΓÇó estimated_duration             integer                     NULL       
+  ΓÇó checklist_items                jsonb                     NULL       
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó last_generated_at              timestamp with time zone                     NULL       
+  ΓÇó created_by                     uuid                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó ai_suggestion_id               text                     NULL       
+  ΓÇó ai_confidence                  double precision                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_task_templates_active
+  ΓÇó idx_task_templates_branch
+  ΓÇó idx_task_templates_company
+  ΓÇó idx_task_templates_recurrence
+  ΓÇó task_templates_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó assigned_user_id ΓåÆ users(id)
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+  ΓÇó created_by ΓåÆ users(id)
+
+≡ƒöÆ RLS: Γ£à ENABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó ceo_task_templates_all (ALL)
+  ΓÇó task_templates_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: tasks
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó company_id                     uuid                     NULL       
+  ΓÇó title                          text                     NOT NULL   
+  ΓÇó description                    text                     NULL       
+  ΓÇó category                       text                     NULL        DEFAULT 'general'::text
+  ΓÇó priority                       text                     NULL        DEFAULT 'medium'::text
+  ΓÇó status                         text                     NULL        DEFAULT 'pending'::text
+  ΓÇó recurrence                     text                     NULL        DEFAULT 'none'::text
+  ΓÇó assigned_to                    uuid                     NULL       
+  ΓÇó assigned_to_name               text                     NULL       
+  ΓÇó assigned_to_role               text                     NULL       
+  ΓÇó due_date                       timestamp with time zone                     NULL       
+  ΓÇó created_by                     uuid                     NULL       
+  ΓÇó created_by_name                text                     NULL       
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó notes                          text                     NULL       
+  ΓÇó progress                       integer                     NULL        DEFAULT 0
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+  ΓÇó completed_at                   timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_tasks_assigned
+  ΓÇó idx_tasks_branch
+  ΓÇó idx_tasks_company
+  ΓÇó idx_tasks_due_date
+  ΓÇó idx_tasks_status
+  ΓÇó tasks_pkey
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó Allow all operations on tasks (ALL)
+  ΓÇó CEO can view all tasks (SELECT)
+  ΓÇó Manager can view tasks in company (SELECT)
+  ΓÇó Staff can view their assigned tasks (SELECT)
+  ΓÇó CEO and Manager can create tasks (INSERT)
+  ΓÇó CEO and Manager can update tasks (UPDATE)
+  ΓÇó Staff can update their own tasks status (UPDATE)
+  ΓÇó CEO can delete tasks (DELETE)
+
+================================================================================
+≡ƒôï TABLE: users
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó id                             uuid                     NOT NULL    DEFAULT gen_random_uuid()
+  ΓÇó email                          text                     NOT NULL   
+  ΓÇó phone                          text                     NULL       
+  ΓÇó full_name                      text                     NULL       
+  ΓÇó avatar_url                     text                     NULL       
+  ΓÇó role                           text                     NOT NULL   
+  ΓÇó company_id                     uuid                     NULL       
+  ΓÇó branch_id                      uuid                     NULL       
+  ΓÇó is_active                      boolean                     NULL        DEFAULT true
+  ΓÇó created_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó updated_at                     timestamp with time zone                     NULL        DEFAULT now()
+  ΓÇó invite_token                   text                     NULL       
+  ΓÇó invite_expires_at              timestamp with time zone                     NULL       
+  ΓÇó invited_at                     timestamp with time zone                     NULL       
+  ΓÇó onboarded_at                   timestamp with time zone                     NULL       
+  ΓÇó deleted_at                     timestamp with time zone                     NULL       
+
+≡ƒöæ INDEXES:
+  ΓÇó idx_users_active
+  ΓÇó idx_users_branch
+  ΓÇó idx_users_branch_id
+  ΓÇó idx_users_company
+  ΓÇó idx_users_company_id
+  ΓÇó idx_users_company_role
+  ΓÇó idx_users_email
+  ΓÇó idx_users_invite_token
+  ΓÇó idx_users_role
+  ΓÇó unique_ceo_per_company
+  ΓÇó users_email_key
+  ΓÇó users_pkey
+
+≡ƒöù FOREIGN KEYS:
+  ΓÇó branch_id ΓåÆ branches(id)
+  ΓÇó company_id ΓåÆ companies(id)
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+≡ƒô£ RLS POLICIES:
+  ΓÇó users_update_own (UPDATE)
+  ΓÇó company_users_select (SELECT)
+  ΓÇó ceo_users_all (ALL)
+
+================================================================================
+≡ƒôï TABLE: users_with_company
+================================================================================
+
+≡ƒô¥ COLUMNS:
+  ΓÇó count                          bigint                     NULL       
+
+≡ƒöÆ RLS: Γ¥î DISABLED
+
+================================================================================
+ΓÜí TRIGGERS
+================================================================================
+  ΓÇó accounting_transactions.accounting_updated_at ΓåÆ update_accounting_updated_at()
+  ΓÇó ai_assistants.update_ai_assistants_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó ai_recommendations.update_ai_recommendations_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó attendance.attendance_prevent_duplicate ΓåÆ prevent_duplicate_checkin()
+  ΓÇó bill_commissions.update_bill_commissions_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó bills.update_bills_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó branches.update_branches_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó business_documents.business_documents_updated_at_trigger ΓåÆ update_business_documents_updated_at()
+  ΓÇó commission_rules.update_commission_rules_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó companies.update_companies_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó companies.update_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó daily_revenue.update_daily_revenue_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó daily_work_reports.daily_work_reports_updated_at ΓåÆ update_daily_work_reports_updated_at()
+  ΓÇó employee_documents.employee_documents_updated_at_trigger ΓåÆ update_employee_documents_updated_at()
+  ΓÇó employee_invitations.update_employee_invitations_updated_at ΓåÆ update_employee_invitations_updated_at()
+  ΓÇó employee_invitations.update_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó employees.trigger_create_manager_permissions ΓåÆ create_default_manager_permissions()
+  ΓÇó employees.trigger_update_employees_updated_at ΓåÆ update_employees_updated_at()
+  ΓÇó labor_contracts.labor_contracts_updated_at_trigger ΓåÆ update_labor_contracts_updated_at()
+  ΓÇó manager_permissions.trigger_update_manager_permissions_timestamp ΓåÆ update_manager_permissions_timestamp()
+  ΓÇó notifications.notification_read_at_trigger ΓåÆ update_notification_read_at()
+  ΓÇó revenue_summary.update_revenue_summary_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó task_approvals.update_task_approvals_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó task_comments.update_task_comments_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó task_templates.task_templates_updated_at ΓåÆ update_task_template_updated_at()
+  ΓÇó users.trigger_prevent_multiple_ceos ΓåÆ prevent_multiple_ceos()
+  ΓÇó users.update_updated_at ΓåÆ update_updated_at_column()
+  ΓÇó users.update_users_updated_at ΓåÆ update_updated_at_column()
+
+================================================================================
+≡ƒöº CUSTOM FUNCTIONS
+================================================================================
+  ΓÇó calculate_bill_commissions(p_bill_id uuid, p_employee_ids uuid[] DEFAULT NULL::uuid[]) ΓåÆ TABLE(employee_id uuid, commission_amount numeric, commission_percentage numeric, rule_applied text)
+  ΓÇó create_default_manager_permissions() ΓåÆ trigger
+  ΓÇó create_employee_by_ceo(p_ceo_id uuid, p_email text, p_password text, p_role text, p_company_id uuid, p_full_name text DEFAULT 'New Employee'::text) ΓåÆ json
+  ΓÇó create_employee_with_auth(p_company_id uuid, p_username text, p_password text, p_full_name text, p_role text, p_email text DEFAULT NULL::text, p_phone text DEFAULT NULL::text, p_branch_id uuid DEFAULT NULL::uuid) ΓåÆ json
+  ΓÇó create_employee_with_password(p_email text, p_password text, p_full_name text, p_role text, p_company_id uuid, p_is_active boolean DEFAULT true) ΓåÆ TABLE(id uuid, email text, full_name text, role text, company_id uuid, is_active boolean, created_at timestamp with time zone)
+  ΓÇó custom_access_token_hook(event jsonb) ΓåÆ jsonb
+  ΓÇó employee_login(p_company_name text, p_username text, p_password text) ΓåÆ json
+  ΓÇó get_ai_total_cost(p_company_id uuid, p_start_date timestamp with time zone DEFAULT NULL::timestamp with time zone) ΓåÆ numeric
+  ΓÇó get_ai_usage_stats(p_company_id uuid, p_days integer DEFAULT 30) ΓåÆ jsonb
+  ΓÇó get_current_user_branch_id() ΓåÆ uuid
+  ΓÇó get_current_user_company_id() ΓåÆ uuid
+  ΓÇó get_current_user_role() ΓåÆ text
+  ΓÇó get_employee_commission_summary(p_employee_id uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date) ΓåÆ TABLE(total_commission numeric, pending_commission numeric, approved_commission numeric, paid_commission numeric, total_bills integer, pending_bills integer, approved_bills integer, paid_bills integer)
+  ΓÇó get_or_create_ai_assistant(p_company_id uuid) ΓåÆ uuid
+  ΓÇó handle_new_user() ΓåÆ trigger
+  ΓÇó hash_password(p_password text) ΓåÆ text
+  ΓÇó is_ceo() ΓåÆ boolean
+  ΓÇó is_ceo_of_company(check_company_id uuid) ΓåÆ boolean
+  ΓÇó is_manager_or_above() ΓåÆ boolean
+  ΓÇó prevent_duplicate_checkin() ΓåÆ trigger
+  ΓÇó prevent_multiple_ceos() ΓåÆ trigger
+  ΓÇó update_accounting_updated_at() ΓåÆ trigger
+  ΓÇó update_business_documents_updated_at() ΓåÆ trigger
+  ΓÇó update_daily_work_reports_updated_at() ΓåÆ trigger
+  ΓÇó update_employee_documents_updated_at() ΓåÆ trigger
+  ΓÇó update_employee_invitations_updated_at() ΓåÆ trigger
+  ΓÇó update_employees_updated_at() ΓåÆ trigger
+  ΓÇó update_labor_contracts_updated_at() ΓåÆ trigger
+  ΓÇó update_manager_permissions_timestamp() ΓåÆ trigger
+  ΓÇó update_notification_read_at() ΓåÆ trigger
+  ΓÇó update_task_template_updated_at() ΓåÆ trigger
+  ΓÇó update_updated_at_column() ΓåÆ trigger
+
+================================================================================
+Γ£à Schema inspection complete!
+================================================================================

@@ -1,73 +1,162 @@
-# Welcome to your Lovable project
+# 🚀 SABOHUB Nexus - Web Dashboard
 
-## Project info
+Giao diện web nhanh cho SABOHUB App - Hệ thống quản lý quán bida chuyên nghiệp.
 
-**URL**: https://lovable.dev/projects/1290b6a8-a7a4-41e7-802e-c13e9948ebbb
+**🌐 Production:** [hub.saboarena.com](https://hub.saboarena.com)  
+**📦 Deployment Status:** ✅ READY TO DEPLOY
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## ⚡ Quick Deploy (5 minutes)
 
-**Use Lovable**
+```powershell
+# Deploy to production now
+.\deploy.ps1 -Production
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1290b6a8-a7a4-41e7-802e-c13e9948ebbb) and start prompting.
+# Or test with preview first
+.\deploy.ps1 -Preview
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 📚 Documentation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### For Developers
+- 📦 **[DEPLOY_NOW.md](./DEPLOY_NOW.md)** - TL;DR quick start
+- 📖 **[Deployment Docs](./docs/deployment/)** - Complete guides
+  - [DEPLOYMENT_PACKAGE_SUMMARY.md](./docs/deployment/DEPLOYMENT_PACKAGE_SUMMARY.md) - Overview
+  - [DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md) - Step-by-step
+  - [DNS_SETUP.md](./docs/deployment/DNS_SETUP.md) - DNS config
+  - [DEPLOYMENT_CHECKLIST.md](./docs/deployment/DEPLOYMENT_CHECKLIST.md) - Checklist
+  - [QUICK_DEPLOY.md](./docs/deployment/QUICK_DEPLOY.md) - Commands
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### For Managers
+- 👔 **[MANAGER_GUIDE.md](./docs/deployment/MANAGER_GUIDE.md)** - User manual
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## ✨ Tính năng
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- 🔐 **Authentication**: Đăng nhập/Đăng ký với Supabase Auth (Email, Google, Apple)
+- 📊 **Dashboard**: Tổng quan hệ thống với thống kê real-time
+- 👥 **Quản lý nhân viên**: Xem và quản lý thông tin nhân viên
+- ✅ **Quản lý công việc**: Tạo, theo dõi và quản lý công việc
+- ⏰ **Chấm công**: Theo dõi chấm công của nhân viên
+- 📈 **Báo cáo**: Báo cáo và phân tích (đang phát triển)
+- 📄 **Tài liệu**: Quản lý tài liệu (đang phát triển)
+- ⚙️ **Cài đặt**: Cài đặt tài khoản và hệ thống
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🛠️ Tech Stack
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- **React 18** - UI Framework
+- **TypeScript** - Type Safety
+- **Vite** - Build Tool (cực nhanh!)
+- **TanStack Query** - Server State Management
+- **Supabase** - Backend (Auth + Database)
+- **shadcn/ui** - UI Components (50+ components)
+- **Tailwind CSS** - Styling
+- **React Router** - Routing
+
+## 🚀 Quick Start
+
+### 1. Cài đặt dependencies
+
+```bash
+npm install
+```
+
+### 2. Cấu hình environment variables
+
+Tạo file `.env` từ `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Cập nhật Supabase credentials:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 3. Chạy development server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Ứng dụng sẽ chạy tại `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📁 Cấu trúc dự án
 
-**Use GitHub Codespaces**
+```
+src/
+├── components/
+│   ├── layouts/        # Dashboard layout với sidebar
+│   └── ui/             # shadcn/ui components
+├── contexts/           # React contexts (Auth)
+├── pages/
+│   ├── auth/           # Login, Signup
+│   ├── dashboard/     # Dashboard chính
+│   ├── employees/     # Quản lý nhân viên
+│   ├── tasks/         # Quản lý công việc
+│   ├── attendance/    # Chấm công
+│   ├── reports/       # Báo cáo
+│   ├── documents/     # Tài liệu
+│   └── settings/      # Cài đặt
+├── lib/
+│   └── supabase.ts    # Supabase client
+└── App.tsx            # Main app với routing
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔗 Tích hợp với SABOHUB App
 
-## What technologies are used for this project?
+Web dashboard này chia sẻ cùng Supabase backend với Flutter app (`sabohub-app`), cho phép:
+- Đồng bộ dữ liệu real-time
+- Chia sẻ authentication
+- Quản lý từ web và mobile
 
-This project is built with:
+## 📝 Scripts
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run test` - Run tests
 
-## How can I deploy this project?
+## 🚢 Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/1290b6a8-a7a4-41e7-802e-c13e9948ebbb) and click on Share -> Publish.
+### Vercel (Recommended)
 
-## Can I connect a custom domain to my Lovable project?
+1. Push code lên GitHub
+2. Import project vào Vercel
+3. Thêm environment variables
+4. Deploy!
 
-Yes, you can!
+### Manual Build
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+npm run build
+# Output trong folder dist/
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📚 Documentation
+
+Xem thêm trong folder `_DOCS/`:
+- `_DOCS/01-ARCHITECTURE/SYSTEM_ARCHITECTURE.md` - Kiến trúc hệ thống
+- `_DOCS/02-FEATURES/CORE_FEATURES.md` - Tính năng chi tiết
+- `_DOCS/05-GUIDES/QUICK_START.md` - Hướng dẫn chi tiết
+
+## 🎯 Roadmap
+
+- [ ] Hoàn thiện tính năng Reports với charts
+- [ ] Tích hợp Google Drive cho Documents
+- [ ] Real-time notifications
+- [ ] Role-based access control (CEO, Manager, Staff)
+- [ ] Advanced analytics dashboard
+- [ ] Mobile responsive improvements
+
+## 📄 License
+
+Private - SABOHUB Ecosystem

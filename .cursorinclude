@@ -1,0 +1,13 @@
+# Allow Cursor AI to read these files
+# This file whitelists files that should be indexed even if they're in globalignore
+
+.env
+.env.local
+.env.example
+.env.development
+.env.production
+.env.*.local
+.env.backup
+.env.local.backup
+.env.production.template
+

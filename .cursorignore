@@ -1,0 +1,17 @@
+# Cursor ignore file
+# Files listed here will NOT be indexed by Cursor AI
+
+# Exclude large build outputs
+node_modules/
+dist/
+build/
+.next/
+.vercel/
+
+# Exclude logs
+*.log
+logs/
+
+# Note: .env files are NOT listed here, so Cursor CAN read them
+# This allows Cursor to help with environment variable configuration
+

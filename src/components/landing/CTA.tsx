@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Smartphone, Globe } from "lucide-react";
 
-export const CTA = () => {
+export const CallToAction = () => {
   return (
     <section className="py-32 relative">
       {/* Background Effects */}
@@ -21,7 +21,7 @@ export const CTA = () => {
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
             Sẵn Sàng Cho <span className="gradient-text">Doanh Nghiệp Của Bạn</span>
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12">
+          <p className="text-xl md:text-2xl text-foreground/70 mb-12">
             SABOHUB - Đối tác đáng tin cậy cho sự phát triển
           </p>
 
@@ -33,21 +33,30 @@ export const CTA = () => {
             <ArrowRight className="ml-2 group-hover:translate-x-2 transition-transform" />
           </Button>
 
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center text-muted-foreground">
-            <a href="#" className="flex items-center gap-2 hover:text-foreground transition-colors group">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center text-foreground/70">
+            <button 
+              className="flex items-center gap-2 hover:text-foreground transition-colors group cursor-pointer bg-transparent border-none"
+              onClick={() => console.log('App Store clicked')}
+            >
               <Smartphone className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>📱 App Store</span>
-            </a>
+            </button>
             <span className="hidden sm:block">|</span>
-            <a href="#" className="flex items-center gap-2 hover:text-foreground transition-colors group">
+            <button 
+              className="flex items-center gap-2 hover:text-foreground transition-colors group cursor-pointer bg-transparent border-none"
+              onClick={() => console.log('Google Play clicked')}
+            >
               <Smartphone className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>🤖 Google Play</span>
-            </a>
+            </button>
             <span className="hidden sm:block">|</span>
-            <a href="#" className="flex items-center gap-2 hover:text-foreground transition-colors group">
+            <button 
+              className="flex items-center gap-2 hover:text-foreground transition-colors group cursor-pointer bg-transparent border-none"
+              onClick={() => console.log('Web App clicked')}
+            >
               <Globe className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <span>🌐 Web App</span>
-            </a>
+            </button>
           </div>
         </motion.div>
       </div>

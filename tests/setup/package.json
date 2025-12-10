@@ -1,0 +1,20 @@
+{
+  "name": "sabohub-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E Tests cho SaboHub với Playwright - Foundation Setup",
+  "scripts": {
+    "setup": "tsx tests/setup/global-setup.ts",
+    "cleanup": "tsx tests/setup/global-teardown.ts",
+    "inspect": "playwright codegen http://localhost:9000",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --headed --debug",
+    "test:e2e:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@supabase/supabase-js": "^2.47.10",
+    "tsx": "^4.19.2"
+  }
+}
