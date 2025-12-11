@@ -374,3 +374,5 @@ function formatTimestamp(date: Date): string {
   if (diffDays < 7) return `${diffDays} ngày trước`;
   return date.toLocaleDateString('vi-VN');
 }
+
+export default SmartNotifications;
