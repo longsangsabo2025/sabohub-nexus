@@ -23,6 +23,7 @@
     "test:integration": "vitest run tests/ui-integration.test.tsx",
     "test:all": "npm run test:backend && npm run test:frontend",
     "telegram": "node scripts/telegram_service_v2.js",
+    "deploy:render": "node scripts/deploy_render_api.js",
     "migrate:sabo-data": "tsx scripts/migrate-sabo-data.ts"
   },
   "dependencies": {

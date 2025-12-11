@@ -25,34 +25,19 @@ export default defineConfig(({ mode }) => ({
         manualChunks: (id) => {
           // Critical: React must be loaded first and separately
           if (id.includes('node_modules')) {
-            // React core - MUST be first
-            if (id.includes('react/') || id.includes('react-dom/')) {
+            // React core and essential dependencies - MUST be first
+            if (id.includes('/node_modules/react/') || 
+                id.includes('/node_modules/react-dom/') || 
+                id.includes('/node_modules/react-router-dom/') ||
+                id.includes('/node_modules/scheduler/') ||
+                id.includes('/node_modules/prop-types/') ||
+                id.includes('/node_modules/react-is/')) {
               return 'vendor-react';
             }
-            // React ecosystem
-            if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'vendor-radix';
-            }
-            // Recharts causing circular dependency issues when chunked separately
-            // if (id.includes('recharts')) {
-            //   return 'vendor-charts';
-            // }
-            if (id.includes('framer-motion')) {
-              return 'vendor-motion';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            // Other node_modules - EXCLUDE react to prevent duplicate
-            if (!id.includes('react')) {
-              return 'vendor-other';
-            }
+            
+            // Let Vite/Rollup handle the rest automatically to avoid circular dependencies
+            // and "undefined" errors caused by aggressive manual chunking.
+            // This might result in larger chunks but ensures stability.
           }
         },
         // Optimize asset naming

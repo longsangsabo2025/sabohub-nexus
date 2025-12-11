@@ -250,15 +250,36 @@ async function sendApprovalRequestToManagers(request) {
     'task_assignment': '📋 Giao việc'
   };
 
+  // Format details based on type
+  let formattedDetails = '';
+  const data = request.details || {};
+
+  if (request.type === 'time_off') {
+    formattedDetails = `
+- 🗓 *Bắt đầu:* ${data.start_date || 'N/A'}
+- 🏁 *Kết thúc:* ${data.end_date || 'N/A'}
+- ⏳ *Số ngày:* ${data.days || 0}
+- 📝 *Lý do:* ${data.reason || 'Không có'}
+    `.trim();
+  } else if (request.type === 'expense') {
+    const amount = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.amount || 0);
+    formattedDetails = `
+- 💰 *Số tiền:* ${amount}
+- 📂 *Danh mục:* ${data.category || 'Khác'}
+- 📝 *Lý do:* ${data.reason || 'Không có'}
+    `.trim();
+  } else {
+    // Fallback for other types
+    formattedDetails = `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+  }
+
   const msg = `
 🔔 *YÊU CẦU PHÊ DUYỆT MỚI*
 
 👤 *Người gửi:* ${requesterName}
 📂 *Loại:* ${typeMap[request.type] || request.type}
 📝 *Chi tiết:*
-\`\`\`json
-${JSON.stringify(request.details, null, 2)}
-\`\`\`
+${formattedDetails}
 
 _Vui lòng xử lý:_
   `;
