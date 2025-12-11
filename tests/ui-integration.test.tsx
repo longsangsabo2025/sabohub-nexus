@@ -60,9 +60,9 @@ describe('UI/UX Tests - Task Management', () => {
     render(<Tasks />, { wrapper: createWrapper() });
     
     // Look for Vietnamese button text
-    const filterButton = screen.queryByText(/Tất cả/i);
-    if (filterButton) {
-      fireEvent.click(filterButton);
+    const filterButtons = screen.queryAllByText(/Tất cả/i);
+    if (filterButtons.length > 0) {
+      fireEvent.click(filterButtons[0]);
     }
     
     expect(true).toBe(true); // Placeholder - UI renders successfully

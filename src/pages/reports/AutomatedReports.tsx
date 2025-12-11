@@ -63,7 +63,7 @@ export default function AutomatedReports() {
       const { data: company } = await supabase
         .from('companies')
         .select('id')
-        .eq('ceo_id', user.id)
+        .eq('owner_id', user.id)
         .single();
 
       if (!company) throw new Error('Company not found');
@@ -143,6 +143,84 @@ export default function AutomatedReports() {
     },
   });
 
+  const generateSystemReportMutation = useMutation({
+    mutationFn: async () => {
+      const date = new Date();
+      date.setDate(date.getDate() - 1); // Report for yesterday
+      const dateStr = date.toISOString().split('T')[0];
+
+      // 1. HR Stats
+      const { data: reports } = await supabase
+        .from('daily_work_reports')
+        .select('total_hours')
+        .eq('report_date', dateStr);
+      
+      const totalReports = reports?.length || 0;
+      const totalHours = reports?.reduce((sum, r) => sum + (r.total_hours || 0), 0) || 0;
+
+      // 2. Finance Stats
+      const { data: transactions } = await supabase
+        .from('financial_transactions')
+        .select('type, amount')
+        .eq('transaction_date', dateStr);
+      
+      let revenue = 0;
+      let expense = 0;
+      transactions?.forEach(t => {
+        if (t.type === 'income') revenue += Number(t.amount);
+        if (t.type === 'expense') expense += Number(t.amount);
+      });
+
+      // 3. Task Stats
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('status')
+        .gte('updated_at', `${dateStr}T00:00:00`)
+        .lte('updated_at', `${dateStr}T23:59:59`);
+      
+      const taskStats = tasks?.reduce((acc: any, t) => {
+        acc[t.status] = (acc[t.status] || 0) + 1;
+        return acc;
+      }, {}) || {};
+
+      // 4. Message
+      const message = `
+BÁO CÁO TỔNG HỢP NGÀY ${dateStr}
+
+1. NHÂN SỰ:
+- Tổng báo cáo: ${totalReports}
+- Tổng giờ làm: ${totalHours}
+
+2. TÀI CHÍNH:
+- Thu: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenue)}
+- Chi: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense)}
+- Lợi nhuận: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenue - expense)}
+
+3. CÔNG VIỆC:
+- Hoàn thành: ${taskStats['completed'] || 0}
+- Đang thực hiện: ${taskStats['in_progress'] || 0}
+- Mới: ${taskStats['todo'] || 0}
+      `.trim();
+
+      // 5. Send Notification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('notifications').insert({
+          user_id: user.id,
+          title: `Báo cáo tổng hợp ${dateStr}`,
+          message: message,
+          type: 'system',
+          is_read: false
+        });
+      }
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      alert('Báo cáo tổng hợp đã được tạo và gửi thông báo!');
+    },
+  });
+
   const toggleSchedule = (id: string) => {
     // TODO: Implement schedule toggle
     console.log('Toggle schedule:', id);
@@ -203,7 +281,46 @@ export default function AutomatedReports() {
         </Card>
       </div>
 
-      {/* Report Schedules */}
+      {/* System Automation Service */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-blue-800">Hệ thống Báo cáo Tổng hợp Tự động</CardTitle>
+              <CardDescription className="text-blue-600">
+                Service chạy ngầm (Node.js) - Tự động tổng hợp số liệu lúc 07:00 AM hàng ngày
+              </CardDescription>
+            </div>
+            <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
+              Active
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm text-blue-800">
+                <Clock className="h-4 w-4" />
+                <span>Lịch chạy: <strong>07:00 AM</strong> hàng ngày</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-blue-800">
+                <CheckCircle className="h-4 w-4" />
+                <span>Trạng thái: <strong>Đang hoạt động</strong></span>
+              </div>
+            </div>
+            <Button 
+              onClick={() => generateSystemReportMutation.mutate()}
+              disabled={generateSystemReportMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Chạy ngay (Manual Trigger)
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Report Schedules */} 
       <Card>
         <CardHeader>
           <CardTitle>Report Schedules</CardTitle>

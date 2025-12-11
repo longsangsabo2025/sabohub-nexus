@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: sabo-neural-link
+    env: docker
+    plan: free
+    dockerContext: .
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_SUPABASE_POOLER_URL
+        sync: false

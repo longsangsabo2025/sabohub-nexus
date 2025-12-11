@@ -21,11 +21,11 @@ def fix_company_record():
         cursor = conn.cursor()
         
         # Check if CEO already has company
-        print(f"🔍 Checking for existing company (ceo_id={CEO_USER_ID[:8]}...)")
+        print(f"🔍 Checking for existing company (owner_id={CEO_USER_ID[:8]}...)")
         cursor.execute("""
-            SELECT id, name, ceo_id 
+            SELECT id, name, owner_id 
             FROM companies 
-            WHERE ceo_id = %s
+            WHERE owner_id = %s
         """, (CEO_USER_ID,))
         
         existing = cursor.fetchone()
@@ -38,7 +38,7 @@ def fix_company_record():
         # Create new company
         print("📝 Creating new company for CEO...")
         cursor.execute("""
-            INSERT INTO companies (name, ceo_id, created_at, updated_at)
+            INSERT INTO companies (name, owner_id, created_at, updated_at)
             VALUES (%s, %s, %s, %s)
             RETURNING id, name
         """, (
@@ -61,11 +61,11 @@ def fix_company_record():
             SELECT 
                 c.id as company_id,
                 c.name,
-                c.ceo_id,
+                c.owner_id,
                 u.email as ceo_email
             FROM companies c
-            LEFT JOIN auth.users u ON u.id = c.ceo_id
-            WHERE c.ceo_id = %s
+            LEFT JOIN auth.users u ON u.id = c.owner_id
+            WHERE c.owner_id = %s
         """, (CEO_USER_ID,))
         
         verify = cursor.fetchone()

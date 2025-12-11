@@ -36,9 +36,10 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('@radix-ui')) {
               return 'vendor-radix';
             }
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
+            // Recharts causing circular dependency issues when chunked separately
+            // if (id.includes('recharts')) {
+            //   return 'vendor-charts';
+            // }
             if (id.includes('framer-motion')) {
               return 'vendor-motion';
             }

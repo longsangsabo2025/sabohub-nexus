@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -39,15 +40,22 @@ export function EditTaskDialog({ open, onOpenChange, taskId }: EditTaskDialogPro
   const [assigneeId, setAssigneeId] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { employeeUser } = useAuth();
 
   // Fetch employees for assignee selector
   const { data: employees } = useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', employeeUser?.company_id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('employees')
         .select('id, full_name, email, role')
         .order('full_name');
+      
+      if (employeeUser?.company_id) {
+        query = query.eq('company_id', employeeUser.company_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -236,10 +244,12 @@ export function EditTaskDialog({ open, onOpenChange, taskId }: EditTaskDialogPro
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="sales">Kinh doanh</SelectItem>
+                    <SelectItem value="admin">Hành chính</SelectItem>
                     <SelectItem value="operations">Vận hành</SelectItem>
                     <SelectItem value="maintenance">Bảo trì</SelectItem>
                     <SelectItem value="inventory">Kho hàng</SelectItem>
-                    <SelectItem value="customerService">Khách hàng</SelectItem>
+                    <SelectItem value="customer_service">Khách hàng</SelectItem>
                     <SelectItem value="other">Khác</SelectItem>
                   </SelectContent>
                 </Select>

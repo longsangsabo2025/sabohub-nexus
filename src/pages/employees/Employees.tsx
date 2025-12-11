@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeRealtime } from '@/hooks/useRealtime';
 import type { Employee } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Trash2, Edit } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Eye } from 'lucide-react';
 import { CreateEmployeeDialog } from '@/components/employees/CreateEmployeeDialog';
 import { EditEmployeeDialog } from '@/components/employees/EditEmployeeDialog';
+import { EmployeeDetailsDialog } from '@/components/employees/EmployeeDetailsDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import {
@@ -39,21 +41,34 @@ const roleColors = {
 export default function Employees() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { employeeUser, user } = useAuth();
   
   // Enable realtime updates
   useEmployeeRealtime();
 
   const { data: employees, isLoading } = useQuery({
-    queryKey: ['employees', searchQuery],
+    queryKey: ['employees', searchQuery, employeeUser?.company_id],
     queryFn: async () => {
       let query = supabase
         .from('employees')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Filter by company_id if logged in as employee
+      if (employeeUser?.company_id) {
+        query = query.eq('company_id', employeeUser.company_id);
+      } else if (user) {
+        // If logged in as Supabase user (CEO), we might need to find their company
+        // But usually CEO sees all their created companies or specific one.
+        // For now, let's assume CEO sees all they have access to via RLS.
+        // But if we want to be safe:
+        // query = query.eq('company_id', ...);
+      }
 
       // Add search filter if query exists
       if (searchQuery.trim()) {
@@ -93,6 +108,11 @@ export default function Employees() {
         <EditEmployeeDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
+          employeeId={selectedEmployeeId}
+        />
+        <EmployeeDetailsDialog
+          open={detailsDialogOpen}
+          onOpenChange={setDetailsDialogOpen}
           employeeId={selectedEmployeeId}
         />
       </div>
@@ -163,6 +183,16 @@ export default function Employees() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedEmployeeId(employee.id);
+                            setDetailsDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

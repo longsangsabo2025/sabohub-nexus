@@ -8,8 +8,31 @@ export interface Employee {
   full_name: string | null;
   name?: string; // Alternative column name
   role: 'ceo' | 'manager' | 'shift_leader' | 'staff';
+  employment_type?: 'full_time' | 'part_time';
+  salary_type?: 'fixed' | 'hourly';
+  base_salary?: number;
+  hourly_rate?: number;
+  bank_account_number?: string;
+  bank_name?: string;
   created_at: string;
   updated_at?: string;
+}
+
+export interface Payroll {
+  id: string;
+  employee_id: string;
+  month: string;
+  total_work_days: number;
+  total_work_hours: number;
+  base_salary: number;
+  allowances: number;
+  deductions: number;
+  bonus: number;
+  total_salary: number;
+  status: 'draft' | 'confirmed' | 'paid';
+  created_at: string;
+  updated_at: string;
+  employees?: Employee;
 }
 
 export interface Task {
@@ -65,8 +88,8 @@ export interface Schedule {
   company_id: string;
   date: string;
   shift_type: ShiftType;
-  custom_start_time?: string | null;
-  custom_end_time?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
   status: ScheduleStatus;
   notes?: string | null;
   created_at: string;

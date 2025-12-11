@@ -30,8 +30,11 @@ const Schedules = lazy(() => import("./pages/schedules/Schedules"));
 const DailyReports = lazy(() => import("./pages/daily-reports/DailyReports"));
 const KPIDashboard = lazy(() => import("./pages/kpi/KPIDashboard"));
 const Reports = lazy(() => import("./pages/reports/Reports"));
+const ExecutiveReport = lazy(() => import("./pages/reports/ExecutiveReport"));
 const Documents = lazy(() => import("./pages/documents/Documents"));
 const Settings = lazy(() => import("./pages/settings/Settings"));
+const BugReports = lazy(() => import("./pages/bug-reports/BugReports"));
+const OperationsCenter = lazy(() => import("./pages/manager/OperationsCenter"));
 const StaffDashboard = lazy(() => import("./pages/staff/StaffDashboard"));
 const ApprovalCenter = lazy(() => import('./pages/approvals/ApprovalCenter'));
 const FinancialTracking = lazy(() => import('./pages/financial/FinancialTracking'));
@@ -48,6 +51,9 @@ const AutomatedReports = lazy(() => import('./pages/reports/AutomatedReports'));
 const SmartNotifications = lazy(() => import('./components/notifications/SmartNotifications'));
 const BusinessProcessFlow = lazy(() => import('./pages/processes/BusinessProcessFlow'));
 const CEOAssistant = lazy(() => import('./pages/ai-assistant/CEOAssistant'));
+
+// SABO Billiards Hub
+const SaboBilliardsHub = lazy(() => import('./components/sabo-billiards/SaboBilliardsHub').then(module => ({ default: module.SaboBilliardsHub })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +96,16 @@ const AppWithAnalytics = () => {
             <ProtectedRoute allowedRoles={['ceo']}>
               <DashboardLayout>
                 <CEODashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/operations"
+          element={
+            <ProtectedRoute allowedRoles={['ceo', 'manager']}>
+              <DashboardLayout>
+                <OperationsCenter />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -205,6 +221,16 @@ const AppWithAnalytics = () => {
           }
         />
         <Route
+          path="/bug-reports"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <BugReports />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/settings"
           element={
             <ProtectedRoute allowedRoles={['ceo', 'manager']}>
@@ -227,7 +253,7 @@ const AppWithAnalytics = () => {
         <Route
           path="/financial"
           element={
-            <ProtectedRoute allowedRoles={['ceo']}>
+            <ProtectedRoute allowedRoles={['ceo', 'manager']}>
               <DashboardLayout>
                 <FinancialTracking />
               </DashboardLayout>
@@ -305,6 +331,16 @@ const AppWithAnalytics = () => {
           }
         />
         <Route
+          path="/executive-reports"
+          element={
+            <ProtectedRoute allowedRoles={['ceo', 'manager']}>
+              <DashboardLayout>
+                <ExecutiveReport />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/smart-notifications"
           element={
             <ProtectedRoute>
@@ -334,6 +370,16 @@ const AppWithAnalytics = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/sabo-billiards"
+          element={
+            <ProtectedRoute allowedRoles={['ceo', 'manager']}>
+              <DashboardLayout>
+                <SaboBilliardsHub />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
         
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
@@ -350,7 +396,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <AppWithAnalytics />
             </BrowserRouter>
           </TooltipProvider>

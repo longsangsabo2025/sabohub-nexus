@@ -249,17 +249,38 @@ export const attendanceService = {
   async getAll(filters: AttendanceFilters = {}) {
     let query = supabase
       .from('attendance')
-      .select('*, employees(full_name, email)')
+      .select('*')
       .order('check_in_time', { ascending: false });
 
     if (filters.employee_id) {
       query = query.eq('employee_id', filters.employee_id);
     }
 
-    const { data, error } = await query.limit(filters.limit || 50);
-
+    const { data: attendanceData, error } = await query.limit(filters.limit || 50);
+    
     if (error) throw error;
-    return (data || []) as Attendance[];
+    if (!attendanceData || attendanceData.length === 0) return { data: [], error: null };
+
+    // Manual join
+    const employeeIds = [...new Set(attendanceData.map((a: any) => a.employee_id).filter(Boolean))];
+    
+    if (employeeIds.length > 0) {
+      const { data: employeesData } = await supabase
+        .from('employees')
+        .select('id, full_name, email')
+        .in('id', employeeIds);
+        
+      if (employeesData) {
+        const empMap = new Map(employeesData.map((e: any) => [e.id, e]));
+        const joinedData = attendanceData.map((record: any) => ({
+          ...record,
+          employees: record.employee_id ? empMap.get(record.employee_id) : null
+        }));
+        return { data: joinedData, error: null };
+      }
+    }
+
+    return { data: attendanceData, error: null };
   },
 
   async getCount() {

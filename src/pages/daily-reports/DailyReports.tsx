@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   FileText,
   Clock,
@@ -30,6 +31,7 @@ import {
   CheckCircle2,
   Eye,
   Calendar,
+  Pencil,
 } from 'lucide-react';
 import { format, isToday, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -61,12 +63,15 @@ interface QuickStats {
 export default function DailyReports() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, employeeUser } = useAuth();
   const queryClient = useQueryClient();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<DailyReport | null>(null);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [reportForm, setReportForm] = useState({
     tasks_summary: '',
     achievements: '',
@@ -76,6 +81,24 @@ export default function DailyReports() {
 
   // Enable realtime
   useDailyReportsRealtime();
+
+  // Fetch user's active tasks for the report
+  const { data: myTasks } = useQuery({
+    queryKey: ['my-tasks-report', employeeUser?.id],
+    queryFn: async () => {
+      if (!employeeUser?.id) return [];
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('assigned_to', employeeUser.id)
+        .or('status.eq.in_progress,status.eq.completed')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!employeeUser?.id,
+  });
 
   // Fetch today's stats - Musk principle: Data-driven decisions
   const { data: stats } = useQuery<QuickStats>({
@@ -106,26 +129,74 @@ export default function DailyReports() {
 
   // Fetch reports for selected date
   const { data: reports = [], isLoading } = useQuery<DailyReport[]>({
-    queryKey: ['daily-reports', format(selectedDate, 'yyyy-MM-dd')],
+    queryKey: ['daily-reports', format(selectedDate, 'yyyy-MM-dd'), user?.id, employeeUser?.id],
     queryFn: async () => {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const { data, error } = await supabase
+      
+      // If user is logged in via Employee Login (Staff/Manager), use RPC to bypass RLS
+      if (employeeUser) {
+        const { data, error } = await supabase.rpc('get_daily_reports', {
+          p_date: dateStr,
+          p_employee_id: employeeUser.id,
+          p_company_id: employeeUser.company_id,
+          p_branch_id: employeeUser.branch_id,
+          p_role: employeeUser.role
+        });
+        
+        if (error) throw error;
+        return data || [];
+      }
+
+      // If user is logged in via Supabase Auth (CEO/Manager), use standard query with manual join
+      // First fetch reports
+      const { data: reportsData, error: reportsError } = await supabase
         .from('daily_work_reports')
         .select('*')
         .eq('report_date', dateStr)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (reportsError) throw reportsError;
+      if (!reportsData || reportsData.length === 0) return [];
+
+      // Then fetch employee details for these reports
+      const employeeIds = [...new Set(reportsData.map(r => r.employee_id))];
+      const { data: employeesData, error: employeesError } = await supabase
+        .from('employees')
+        .select('id, full_name, role')
+        .in('id', employeeIds);
+
+      if (employeesError) {
+        console.error('Error fetching employee details:', employeesError);
+        // Return reports without names if employee fetch fails
+        return reportsData.map(report => ({
+          ...report,
+          employee_name: 'Unknown',
+          employee_role: 'Unknown'
+        }));
+      }
+
+      // Map employee details to reports
+      const employeeMap = new Map(employeesData?.map(e => [e.id, e]));
+      
+      return reportsData.map(report => {
+        const employee = employeeMap.get(report.employee_id);
+        return {
+          ...report,
+          employee_name: employee?.full_name || 'Unknown',
+          employee_role: employee?.role || 'Unknown'
+        };
+      });
     },
     staleTime: 10000,
   });
 
   // Check if user already submitted today
   const { data: userReport } = useQuery({
-    queryKey: ['user-daily-report', format(new Date(), 'yyyy-MM-dd'), user?.id],
+    queryKey: ['user-daily-report', format(new Date(), 'yyyy-MM-dd'), user?.id, employeeUser?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      const currentUserId = user?.id || employeeUser?.id;
+      if (!currentUserId) return null;
+      
       const today = format(new Date(), 'yyyy-MM-dd');
       const { data } = await supabase
         .from('daily_work_reports')
@@ -141,15 +212,22 @@ export default function DailyReports() {
   // Create report mutation
   const createReportMutation = useMutation({
     mutationFn: async (formData: typeof reportForm) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      const currentUser = user || employeeUser;
+      if (!currentUser?.id) throw new Error('Not authenticated');
+
+      const employeeId = currentUser.id;
+      const companyId = employeeUser?.company_id || user?.user_metadata?.company_id;
+      const branchId = employeeUser?.branch_id;
 
       // Get today's attendance for check-in/out times
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      
       const { data: attendance } = await supabase
         .from('attendance')
         .select('check_in_time, check_out_time')
-        .eq('employee_id', user.id)
-        .gte('check_in_time', today)
+        .eq('employee_id', employeeId)
+        .gte('check_in_time', startOfDay.toISOString())
         .maybeSingle();
 
       const checkIn = attendance?.check_in_time || new Date().toISOString();
@@ -158,19 +236,41 @@ export default function DailyReports() {
       // Calculate hours
       const hours = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60);
 
-      const { error } = await supabase
-        .from('daily_work_reports')
-        .insert({
-          employee_id: user.id,
-          company_id: user.user_metadata?.company_id,
+      const reportData = {
+          employee_id: employeeId,
+          company_id: companyId,
+          branch_id: branchId,
           report_date: today,
           check_in_time: checkIn,
           check_out_time: checkOut,
           total_hours: Math.max(0, hours),
           ...formData,
+      };
+
+      const { error } = await supabase
+        .from('daily_work_reports')
+        .insert(reportData);
+
+      if (error) {
+        console.log('Standard insert failed, trying RPC fallback...', error);
+        // Fallback to RPC for staff with custom auth
+        const { data: rpcData, error: rpcError } = await supabase.rpc('submit_daily_report', {
+          p_employee_id: reportData.employee_id,
+          p_company_id: reportData.company_id,
+          p_branch_id: reportData.branch_id,
+          p_report_date: reportData.report_date,
+          p_check_in_time: reportData.check_in_time,
+          p_check_out_time: reportData.check_out_time,
+          p_total_hours: reportData.total_hours,
+          p_tasks_summary: reportData.tasks_summary,
+          p_achievements: reportData.achievements,
+          p_challenges: reportData.challenges,
+          p_notes: reportData.notes
         });
 
-      if (error) throw error;
+        if (rpcError) throw error; // Throw original error if RPC also fails or doesn't exist
+        if (rpcData && !rpcData.success) throw new Error(rpcData.error || 'Submission failed');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-reports'] });
@@ -186,6 +286,63 @@ export default function DailyReports() {
       toast({
         title: '✅ Đã gửi báo cáo',
         description: 'Báo cáo hôm nay đã được lưu thành công',
+      });
+    },
+  });
+
+  // Update report mutation
+  const updateReportMutation = useMutation({
+    mutationFn: async (formData: typeof reportForm) => {
+      if (!editingReportId) throw new Error('No report selected for update');
+      const currentUser = user || employeeUser;
+      if (!currentUser?.id) throw new Error('Not authenticated');
+
+      // If using Supabase Auth (CEO/Manager), use standard update
+      if (user) {
+        const { error } = await supabase
+          .from('daily_work_reports')
+          .update({
+            tasks_summary: formData.tasks_summary,
+            achievements: formData.achievements,
+            challenges: formData.challenges,
+            notes: formData.notes,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingReportId)
+          .eq('employee_id', user.id); // RLS will also enforce this
+
+        if (error) throw error;
+      } 
+      // If using Employee Auth (Staff), use RPC
+      else if (employeeUser) {
+        const { data, error } = await supabase.rpc('update_daily_report', {
+          p_report_id: editingReportId,
+          p_employee_id: employeeUser.id,
+          p_tasks_summary: formData.tasks_summary,
+          p_achievements: formData.achievements,
+          p_challenges: formData.challenges,
+          p_notes: formData.notes
+        });
+
+        if (error) throw error;
+        if (data && !data.success) throw new Error(data.error || 'Update failed');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['user-daily-report'] });
+      setIsCreateDialogOpen(false);
+      setIsEditing(false);
+      setEditingReportId(null);
+      setReportForm({
+        tasks_summary: '',
+        achievements: '',
+        challenges: '',
+        notes: '',
+      });
+      toast({
+        title: '✅ Đã cập nhật',
+        description: 'Báo cáo đã được cập nhật thành công',
       });
     },
     onError: (error: Error) => {
@@ -206,7 +363,12 @@ export default function DailyReports() {
       });
       return;
     }
-    createReportMutation.mutate(reportForm);
+    
+    if (isEditing) {
+      updateReportMutation.mutate(reportForm);
+    } else {
+      createReportMutation.mutate(reportForm);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -249,10 +411,15 @@ export default function DailyReports() {
           {isToday(selectedDate) && !userReport && (
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 relative"
             >
               <Send className="h-4 w-4 mr-2" />
               Nộp báo cáo
+              {myTasks && myTasks.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  {myTasks.length}
+                </span>
+              )}
             </Button>
           )}
         </div>
@@ -388,7 +555,7 @@ export default function DailyReports() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-yellow-500" />
-              Báo cáo hôm nay
+              {isEditing ? 'Cập nhật báo cáo' : 'Báo cáo hôm nay'}
             </DialogTitle>
             <DialogDescription>
               {format(new Date(), 'EEEE, dd/MM/yyyy', { locale: vi })}
@@ -396,10 +563,65 @@ export default function DailyReports() {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Task Selection */}
+            {myTasks && myTasks.length > 0 && (
+              <div className="space-y-3 border rounded-md p-3 bg-muted/20">
+                <Label className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Chọn công việc liên quan
+                </Label>
+                <div className="grid grid-cols-1 gap-2 max-h-[150px] overflow-y-auto">
+                  {myTasks.map((task: any) => (
+                    <div key={task.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`task-${task.id}`} 
+                        checked={selectedTasks.includes(task.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedTasks([...selectedTasks, task.id]);
+                          } else {
+                            setSelectedTasks(selectedTasks.filter(id => id !== task.id));
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`task-${task.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {task.title} <span className="text-xs text-muted-foreground">({task.status === 'completed' ? 'Đã xong' : `${task.progress || 0}%`})</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  size="sm" 
+                  className="w-full mt-2"
+                  onClick={() => {
+                    const selectedTaskObjects = myTasks.filter((t: any) => selectedTasks.includes(t.id));
+                    const summary = selectedTaskObjects.map((t: any) => {
+                      const statusText = t.status === 'completed' ? 'Đã hoàn thành' : `Đang thực hiện (${t.progress || 0}%)`;
+                      return `- ${t.title}: ${statusText}`;
+                    }).join('\n');
+                    
+                    setReportForm(prev => ({
+                      ...prev,
+                      tasks_summary: prev.tasks_summary ? `${prev.tasks_summary}\n${summary}` : summary
+                    }));
+                  }}
+                  disabled={selectedTasks.length === 0}
+                >
+                  <Zap className="h-3 w-3 mr-2" />
+                  Tự động điền báo cáo từ công việc đã chọn
+                </Button>
+              </div>
+            )}
+
             {/* Tasks Summary - Required */}
             <div>
               <Label className="flex items-center gap-2 mb-2">
-                <Target className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 Công việc đã làm *
               </Label>
               <Textarea
@@ -458,17 +680,27 @@ export default function DailyReports() {
           <div className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
-              onClick={() => setIsCreateDialogOpen(false)}
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                setIsEditing(false);
+                setEditingReportId(null);
+                setReportForm({
+                  tasks_summary: '',
+                  achievements: '',
+                  challenges: '',
+                  notes: '',
+                });
+              }}
             >
               Hủy
             </Button>
             <Button
               onClick={handleSubmitReport}
-              disabled={createReportMutation.isPending || !reportForm.tasks_summary.trim()}
+              disabled={createReportMutation.isPending || updateReportMutation.isPending || !reportForm.tasks_summary.trim()}
               className="bg-green-600 hover:bg-green-700"
             >
               <Send className="h-4 w-4 mr-2" />
-              {createReportMutation.isPending ? 'Đang gửi...' : 'Gửi báo cáo'}
+              {createReportMutation.isPending || updateReportMutation.isPending ? 'Đang xử lý...' : (isEditing ? 'Cập nhật' : 'Gửi báo cáo')}
             </Button>
           </div>
         </DialogContent>
@@ -480,19 +712,44 @@ export default function DailyReports() {
           {selectedReport && (
             <>
               <DialogHeader>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                      {getInitials(selectedReport.employee_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <DialogTitle>{selectedReport.employee_name}</DialogTitle>
-                    <DialogDescription>
-                      {format(parseISO(selectedReport.report_date), 'dd/MM/yyyy', { locale: vi })} • 
-                      {selectedReport.total_hours}h
-                    </DialogDescription>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                        {getInitials(selectedReport.employee_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <DialogTitle>{selectedReport.employee_name}</DialogTitle>
+                      <DialogDescription>
+                        {format(parseISO(selectedReport.report_date), 'dd/MM/yyyy', { locale: vi })} • 
+                        {selectedReport.total_hours}h
+                      </DialogDescription>
+                    </div>
                   </div>
+
+                  {(user?.id === selectedReport.employee_id || employeeUser?.id === selectedReport.employee_id) && 
+                   isToday(parseISO(selectedReport.report_date)) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setReportForm({
+                          tasks_summary: selectedReport.tasks_summary,
+                          achievements: selectedReport.achievements,
+                          challenges: selectedReport.challenges,
+                          notes: selectedReport.notes,
+                        });
+                        setEditingReportId(selectedReport.id);
+                        setIsEditing(true);
+                        setSelectedReport(null);
+                        setIsCreateDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Sửa
+                    </Button>
+                  )}
                 </div>
               </DialogHeader>
 

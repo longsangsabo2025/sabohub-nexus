@@ -28,6 +28,8 @@ export default function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [taskNotifications, setTaskNotifications] = useState(true);
   const [attendanceNotifications, setAttendanceNotifications] = useState(true);
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [savingTelegram, setSavingTelegram] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -36,7 +38,41 @@ export default function Settings() {
     } else if (employeeUser?.full_name) {
       setFullName(employeeUser.full_name);
     }
+
+    // Load Telegram Chat ID
+    const loadTelegram = async () => {
+      if (employeeUser?.id) {
+        const { data } = await supabase
+          .from('employees')
+          .select('telegram_chat_id')
+          .eq('id', employeeUser.id)
+          .single();
+        if (data?.telegram_chat_id) {
+          setTelegramChatId(data.telegram_chat_id);
+        }
+      }
+    };
+    loadTelegram();
   }, [user, employeeUser]);
+
+  // Handle Telegram Update
+  const handleUpdateTelegram = async () => {
+    if (!employeeUser?.id) return;
+    setSavingTelegram(true);
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update({ telegram_chat_id: telegramChatId })
+        .eq('id', employeeUser.id);
+
+      if (error) throw error;
+      toast({ title: 'Thành công', description: 'Đã cập nhật Telegram Chat ID' });
+    } catch (error: any) {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingTelegram(false);
+    }
+  };
 
   // Handle profile update
   const handleUpdateProfile = async () => {
@@ -197,6 +233,33 @@ export default function Settings() {
               {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Đổi mật khẩu
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>SABO Neural Link (Telegram)</CardTitle>
+            <CardDescription>Kết nối Telegram để nhận thông báo tức thì</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="telegram-id">Telegram Chat ID</Label>
+              <div className="flex gap-2">
+                <Input 
+                  id="telegram-id" 
+                  placeholder="Nhập Chat ID (VD: 123456789)"
+                  value={telegramChatId}
+                  onChange={(e) => setTelegramChatId(e.target.value)}
+                />
+                <Button onClick={handleUpdateTelegram} disabled={savingTelegram}>
+                  {savingTelegram && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Lưu
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Để lấy Chat ID: Mở Telegram, chat với <strong>@userinfobot</strong> hoặc bot của hệ thống.
+              </p>
+            </div>
           </CardContent>
         </Card>
 

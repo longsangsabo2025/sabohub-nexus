@@ -36,6 +36,15 @@ export function EditEmployeeDialog({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'ceo' | 'manager' | 'shift_leader' | 'staff'>('staff');
+  
+  // Payroll fields
+  const [employmentType, setEmploymentType] = useState<'full_time' | 'part_time'>('full_time');
+  const [salaryType, setSalaryType] = useState<'fixed' | 'hourly'>('fixed');
+  const [baseSalary, setBaseSalary] = useState<string>('0');
+  const [hourlyRate, setHourlyRate] = useState<string>('0');
+  const [bankAccount, setBankAccount] = useState('');
+  const [bankName, setBankName] = useState('');
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -62,6 +71,14 @@ export function EditEmployeeDialog({
           setFullName(data.full_name || '');
           setEmail(data.email || '');
           setRole(data.role || 'staff');
+          
+          // Load payroll data
+          setEmploymentType(data.employment_type || 'full_time');
+          setSalaryType(data.salary_type || 'fixed');
+          setBaseSalary(data.base_salary?.toString() || '0');
+          setHourlyRate(data.hourly_rate?.toString() || '0');
+          setBankAccount(data.bank_account_number || '');
+          setBankName(data.bank_name || '');
         }
       };
 
@@ -71,6 +88,12 @@ export function EditEmployeeDialog({
       setFullName('');
       setEmail('');
       setRole('staff');
+      setEmploymentType('full_time');
+      setSalaryType('fixed');
+      setBaseSalary('0');
+      setHourlyRate('0');
+      setBankAccount('');
+      setBankName('');
     }
   }, [open, employeeId, toast]);
 
@@ -84,14 +107,24 @@ export function EditEmployeeDialog({
           full_name: fullName,
           email,
           role,
+          employment_type: employmentType,
+          salary_type: salaryType,
+          base_salary: parseFloat(baseSalary) || 0,
+          hourly_rate: parseFloat(hourlyRate) || 0,
+          bank_account_number: bankAccount,
+          bank_name: bankName,
           updated_at: new Date().toISOString(),
         })
         .eq('id', employeeId)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      
+      if (!data || data.length === 0) {
+        throw new Error('Không thể cập nhật. Vui lòng kiểm tra quyền hạn của bạn.');
+      }
+
+      return data[0];
     },
     onSuccess: () => {
       toast({
@@ -187,6 +220,85 @@ export function EditEmployeeDialog({
                   <SelectItem value="ceo">{roleLabels.ceo}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="border-t pt-4 mt-2">
+              <h3 className="font-medium mb-4">Thông tin lương & Chế độ</h3>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Hình thức làm việc</Label>
+                    <Select
+                      value={employmentType}
+                      onValueChange={(value: 'full_time' | 'part_time') => setEmploymentType(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="full_time">Full-time</SelectItem>
+                        <SelectItem value="part_time">Part-time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Cách tính lương</Label>
+                    <Select
+                      value={salaryType}
+                      onValueChange={(value: 'fixed' | 'hourly') => setSalaryType(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">Lương cố định</SelectItem>
+                        <SelectItem value="hourly">Theo giờ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {salaryType === 'fixed' ? (
+                  <div className="grid gap-2">
+                    <Label>Lương cơ bản (VNĐ)</Label>
+                    <Input
+                      type="number"
+                      value={baseSalary}
+                      onChange={(e) => setBaseSalary(e.target.value)}
+                      placeholder="10000000"
+                    />
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <Label>Lương theo giờ (VNĐ/h)</Label>
+                    <Input
+                      type="number"
+                      value={hourlyRate}
+                      onChange={(e) => setHourlyRate(e.target.value)}
+                      placeholder="50000"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Ngân hàng</Label>
+                    <Input
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="Vietcombank"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Số tài khoản</Label>
+                    <Input
+                      value={bankAccount}
+                      onChange={(e) => setBankAccount(e.target.value)}
+                      placeholder="1234567890"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>

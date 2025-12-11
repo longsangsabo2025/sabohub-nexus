@@ -90,7 +90,7 @@ export default function WorkflowAutomation() {
       const { data: company } = await supabase
         .from('companies')
         .select('id')
-        .eq('ceo_id', user.id)
+        .eq('owner_id', user.id)
         .single();
 
       if (!company) throw new Error('Company not found');

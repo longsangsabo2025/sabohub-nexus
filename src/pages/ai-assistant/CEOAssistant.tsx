@@ -36,6 +36,8 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { aiService } from '@/services/aiService';
 import type { AIMessage as AIServiceMessage } from '@/services/aiService';
+import { SABO_BILLIARDS } from '@/lib/sabo-billiards/constants';
+import { useSaboCompany, useSaboEmployees, useSaboTables } from '@/lib/sabo-billiards/hooks';
 
 interface AIInsight {
   id: string;
@@ -118,6 +120,11 @@ export default function CEOAssistant() {
   
   // Get AI provider info
   const aiProvider = aiService.getProviderInfo();
+
+  // SABO Billiards business context
+  const { data: saboCompany } = useSaboCompany();
+  const { data: saboEmployees } = useSaboEmployees();
+  const { data: saboTables } = useSaboTables();
 
   // Fetch real-time company metrics
   const { data: metrics, isLoading: metricsLoading } = useQuery<CompanyMetrics>({
@@ -730,21 +737,39 @@ export default function CEOAssistant() {
       const messages: AIServiceMessage[] = [
         {
           role: 'system',
-          content: `You are JARVIS - an AI business analyst for a Vietnamese CEO. 
+          content: `You are JARVIS - an AI business analyst for a Vietnamese CEO managing multiple businesses including SABO Billiards.
 
-Current Company Status:
+🏢 SABO BILLIARDS BUSINESS CONTEXT:
+- Company: ${SABO_BILLIARDS.FULL_NAME}
+- Type: Billiards Hall Entertainment
+- Location: ${SABO_BILLIARDS.ADDRESS}
+- Tables: ${saboTables?.length || 'Data loading'} billiards tables
+- Employees: ${saboEmployees?.length || 'Data loading'} staff members
+- Services: Pool tables rental, tournaments, coaching, refreshments
+- Operating Hours: Daily (flexible based on customer demand)
+- Revenue Streams: Table rentals by hour, tournaments, coaching fees, food & beverage
+
+🎯 SABO BILLIARDS KEY METRICS TO MONITOR:
+- Table utilization rates and peak hours
+- Customer retention and tournament participation
+- Revenue per table per hour
+- Staff performance and customer service quality
+- Equipment maintenance and replacement needs
+
+📊 Current System Status:
 - Tasks: ${context.tasks.total} total, ${context.tasks.overdue} overdue, ${context.tasks.completed} completed (${context.tasks.completion_rate}% completion rate)
 - Team: ${context.team.total} members, ${context.team.active} active
 - Recent Issues: ${context.recent_issues.join(', ') || 'None'}
 
-Guidelines:
+💡 BUSINESS INTELLIGENCE GUIDELINES:
 1. Respond in Vietnamese (friendly but professional)
-2. Be concise (2-4 sentences max)
-3. Focus on actionable insights
+2. Be concise (2-4 sentences max) 
+3. Focus on actionable insights for billiards business optimization
 4. Use emojis appropriately
-5. If data is missing, acknowledge it and suggest solutions
+5. Consider billiards industry specifics (peak hours, seasonal trends, equipment wear)
+6. If SABO Billiards data is missing, acknowledge it and suggest solutions
 
-CEO wants INSIGHTS, not raw data. Think like a strategic advisor.`,
+Remember: CEO wants STRATEGIC INSIGHTS for growing the billiards business, not just raw data.`,
         },
         // Include recent chat history for context
         ...chatMessages.slice(-4).map(msg => ({
@@ -941,19 +966,33 @@ CEO wants INSIGHTS, not raw data. Think like a strategic advisor.`,
 
       // Generate AI-powered task suggestions
       const prompt = context 
-        ? `Bạn là AI Assistant của CEO. Phân tích tình hình doanh nghiệp hiện tại và đề xuất 3-5 nhiệm vụ CẦN GIAO NGAY để giải quyết vấn đề:
+        ? `Bạn là AI Assistant của CEO quản lý SABO Billiards. Phân tích tình hình doanh nghiệp hiện tại và đề xuất 3-5 nhiệm vụ CẦN GIAO NGAY:
 
-📊 TÌNH HÌNH HIỆN TẠI:
+🎱 SABO BILLIARDS - BUSINESS CONTEXT:
+- Doanh nghiệp: ${SABO_BILLIARDS.FULL_NAME} 
+- Loại hình: Phòng bi-a giải trí
+- Địa chỉ: ${SABO_BILLIARDS.ADDRESS}
+- Số bàn: ${saboTables?.length || 'Đang tải'} bàn bi-a
+- Nhân viên: ${saboEmployees?.length || 'Đang tải'} người
+
+📊 TÌNH HÌNH HỆ THỐNG HIỆN TẠI:
 - Tasks: ${context.overdueTasks} tasks quá hạn / ${context.totalTasks} tổng (tỉ lệ hoàn thành: ${context.completionRate}%)
 - Nhân viên: ${context.activeEmployees} người đang hoạt động, ${context.workloadIssues} người có workload cao (>10 tasks)
 - Tài chính: Lợi nhuận ${context.profit.toLocaleString('vi-VN')} VNĐ, xu hướng ${context.financialTrend === 'up' ? '↗️ tăng' : context.financialTrend === 'down' ? '↘️ giảm' : '→ ổn định'}
 - Cảnh báo AI: ${context.criticalInsights.length} insights mức độ cao/critical
 
-🎯 CÁC VẤN ĐỀ CẦN GIẢI QUYẾT:
+🎯 CÁC VẤN ĐỀ CẦN GIẢI QUYẾT (Ưu tiên SABO Billiards):
 ${context.criticalInsights.map((insight, idx) => `${idx + 1}. [${insight.category}] ${insight.title}`).join('\n')}
 
+🎱 LĨNH VỰC QUAN TRỌNG CHO SABO BILLIARDS:
+- Tỷ lệ sử dụng bàn bi-a và giờ cao điểm
+- Chất lượng dịch vụ khách hàng và giữ chân khách
+- Bảo trì thiết bị và thay thế khi cần
+- Tổ chức giải đấu và hoạt động thu hút khách
+- Quản lý doanh thu theo giờ và theo bàn
+
 📝 YÊU CẦU:
-Hãy đề xuất 3-5 nhiệm vụ cụ thể để CEO giao ngay. Format:
+Hãy đề xuất 3-5 nhiệm vụ cụ thể cho CEO SABO Billiards giao ngay. Format:
 
 **TASK 1: [Tiêu đề ngắn gọn]**
 Mô tả: [Giải thích tại sao cần làm ngay]
@@ -968,10 +1007,15 @@ Lưu ý:
 - Nhiệm vụ phải THỰC TẾ và có thể giao ngay
 - Đề xuất deadline hợp lý (1-7 ngày)
 - Sử dụng tiếng Việt tự nhiên`
-        : `Bạn là AI Assistant của CEO. Đề xuất 5 nhiệm vụ quan trọng để quản lý doanh nghiệp hiệu quả:
+        : `Bạn là AI Assistant của CEO quản lý SABO Billiards (${SABO_BILLIARDS.FULL_NAME}). Đề xuất 5 nhiệm vụ quan trọng để quản lý phòng bi-a hiệu quả:
+
+🎱 SABO BILLIARDS CONTEXT:
+- Loại hình: Phòng bi-a giải trí tại Vũng Tàu
+- Địa chỉ: ${SABO_BILLIARDS.ADDRESS}
+- Focus: Dịch vụ bi-a chất lượng cao, giải đấu, coaching
 
 📝 YÊU CẦU:
-Đề xuất 5 nhiệm vụ thiết yếu cho một CEO. Format:
+Đề xuất 5 nhiệm vụ thiết yếu cho CEO phòng bi-a. Tập trung vào quản lý bàn bi-a, nhân viên, khách hàng, và doanh thu. Format:
 
 **TASK 1: [Tiêu đề]**
 Mô tả: [Chi tiết nhiệm vụ]
@@ -1532,9 +1576,40 @@ interface TaskDelegatorContentProps {
 function TaskDelegatorContent({ autoDelegateData, onDataConsumed }: TaskDelegatorContentProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [rawInput, setRawInput] = useState('');
-  const [parsedTasks, setParsedTasks] = useState<ParsedTask[]>([]);
+  
+  // Load saved state from localStorage on mount
+  const [rawInput, setRawInput] = useState(() => {
+    try {
+      return localStorage.getItem('taskDelegator_rawInput') || '';
+    } catch { return ''; }
+  });
+  
+  const [parsedTasks, setParsedTasks] = useState<ParsedTask[]>(() => {
+    try {
+      const saved = localStorage.getItem('taskDelegator_parsedTasks');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Save rawInput to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('taskDelegator_rawInput', rawInput);
+    } catch (e) {
+      console.error('Failed to save rawInput to localStorage:', e);
+    }
+  }, [rawInput]);
+
+  // Save parsedTasks to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('taskDelegator_parsedTasks', JSON.stringify(parsedTasks));
+    } catch (e) {
+      console.error('Failed to save parsedTasks to localStorage:', e);
+    }
+  }, [parsedTasks]);
 
   // Auto-fill from AI Assistant's auto-delegate feature
   useEffect(() => {
@@ -1694,22 +1769,63 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
 
   const createTasksMutation = useMutation({
     mutationFn: async (tasksToCreate: ParsedTask[]) => {
+      console.log('🚀 Starting task creation...', { count: tasksToCreate.length });
+      
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) {
+        console.error('❌ Not authenticated');
+        throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+      }
+      console.log('✅ User authenticated:', user.id);
 
-      const { data: company } = await supabase.from('companies').select('id').eq('owner_id', user.id).single();
-      if (!company) throw new Error('Company not found');
+      const { data: company, error: companyError } = await supabase.from('companies').select('id').eq('owner_id', user.id).single();
+      if (companyError || !company) {
+        console.error('❌ Company not found:', companyError);
+        throw new Error('Không tìm thấy công ty. Vui lòng kiểm tra tài khoản.');
+      }
+      console.log('✅ Company found:', company.id);
 
+      // Build task data with validation
       const tasksData = tasksToCreate.map(task => {
-        const validPriority = task.priority === 'urgent' ? 'high' : task.priority;
+        // Priority is lowercase in DB
+        const normalizedPriority = (task.priority || 'medium').toLowerCase().trim();
+        const validPriority = ['low', 'medium', 'high', 'urgent'].includes(normalizedPriority) 
+          ? normalizedPriority 
+          : 'medium';
+        
+        // Map category to database format (lowercase, specific allowed values)
+        // Allowed: sales, admin, operations, other, customer_service, maintenance, inventory
+        const categoryMap: Record<string, string> = {
+          'operations': 'operations',
+          'maintenance': 'maintenance', 
+          'inventory': 'inventory',
+          'marketing': 'sales', // Map marketing to sales
+          'sales': 'sales',
+          'admin': 'admin',
+          'hr': 'admin', // Map hr to admin
+          'finance': 'admin', // Map finance to admin
+          'customer_service': 'customer_service',
+          'other': 'other'
+        };
+        
+        // Normalize input category: lowercase, trim, remove extra spaces
+        const normalizedCategory = (task.category || 'other').toLowerCase().trim();
+        const validCategory = categoryMap[normalizedCategory] || 'other';
+        
         const assignedEmployee = task.suggestedEmployee;
+        
+        // Build instructions safely
+        const instructions = Array.isArray(task.instructions) 
+          ? task.instructions.map((inst, i) => `${i + 1}. ${inst}`).join('\n')
+          : '';
+        
         return {
           company_id: company.id,
-          title: task.title,
-          description: `${task.description}\n\n**📋 HƯỚNG DẪN THỰC HIỆN:**\n${task.instructions.map((inst, i) => `${i + 1}. ${inst}`).join('\n')}\n\n⏱️ Ước tính: ${task.estimatedHours}h\n🤖 AI-generated task`,
-          category: task.category,
+          title: (task.title || 'Untitled Task').substring(0, 255), // Limit title length
+          description: `${task.description || ''}\n\n**📋 HƯỚNG DẪN THỰC HIỆN:**\n${instructions}\n\n⏱️ Ước tính: ${task.estimatedHours || 1}h\n🤖 AI-generated task`.substring(0, 5000), // Limit description
+          category: validCategory,
           priority: validPriority,
-          status: 'pending',
+          status: 'pending', // Use lowercase pending
           assigned_to: assignedEmployee?.id || null,
           assigned_to_name: assignedEmployee?.name || null,
           assigned_to_role: assignedEmployee?.role || null,
@@ -1718,19 +1834,64 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
         };
       });
 
-      const { data, error } = await supabase.from('tasks').insert(tasksData).select();
-      if (error) throw error;
-      return data;
+      console.log('📝 Tasks data prepared:', tasksData.length, 'tasks');
+
+      // Insert in batches of 10 to avoid timeout
+      const BATCH_SIZE = 10;
+      const allCreatedTasks: any[] = [];
+      
+      for (let i = 0; i < tasksData.length; i += BATCH_SIZE) {
+        const batch = tasksData.slice(i, i + BATCH_SIZE);
+        console.log(`📦 Inserting batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(tasksData.length / BATCH_SIZE)}...`);
+        
+        const { data, error } = await supabase.from('tasks').insert(batch).select();
+        if (error) {
+          console.error('❌ Batch insert error:', error);
+          throw new Error(`Lỗi tạo tasks (batch ${Math.floor(i / BATCH_SIZE) + 1}): ${error.message}`);
+        }
+        
+        if (data) {
+          allCreatedTasks.push(...data);
+          console.log(`✅ Batch ${Math.floor(i / BATCH_SIZE) + 1} created:`, data.length, 'tasks');
+        }
+      }
+
+      console.log('🎉 All tasks created successfully:', allCreatedTasks.length);
+      return allCreatedTasks;
     },
     onSuccess: (data) => {
       toast({ title: '🎉 Tasks đã được tạo!', description: `${data.length} tasks đã giao cho nhân viên thành công` });
       setRawInput('');
       setParsedTasks([]);
+      // Clear localStorage after successful creation
+      try {
+        localStorage.removeItem('taskDelegator_rawInput');
+        localStorage.removeItem('taskDelegator_parsedTasks');
+        
+        // Save to history
+        const historyItem = {
+          id: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          taskCount: data.length,
+          tasks: data.map((t: any) => t.title)
+        };
+        
+        const currentHistory = JSON.parse(localStorage.getItem('taskDelegator_history') || '[]');
+        localStorage.setItem('taskDelegator_history', JSON.stringify([historyItem, ...currentHistory].slice(0, 50))); // Keep last 50
+        
+      } catch (e) {
+        console.error('Failed to update localStorage:', e);
+      }
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['employees-for-delegation'] });
     },
     onError: (error) => {
-      toast({ title: 'Lỗi tạo tasks', description: error instanceof Error ? error.message : 'Không thể tạo tasks', variant: 'destructive' });
+      console.error('❌ Create tasks error:', error);
+      toast({ 
+        title: 'Lỗi tạo tasks', 
+        description: error instanceof Error ? error.message : 'Không thể tạo tasks. Vui lòng thử lại.', 
+        variant: 'destructive' 
+      });
     },
   });
 
@@ -1758,9 +1919,57 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
     marketing: '📱', operations: '⚙️', admin: '📋', sales: '💰', other: '📌',
   };
 
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('taskDelegator_history');
+      if (saved) setHistory(JSON.parse(saved));
+    } catch (e) { console.error(e); }
+  }, [showHistory]);
+
   return (
     <div className="space-y-6">
       {/* Stats */}
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)}>
+          <ListTodo className="mr-2 h-4 w-4" />
+          {showHistory ? 'Hide History' : 'View History'}
+        </Button>
+      </div>
+
+      {showHistory && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Delegation History</CardTitle>
+            <CardDescription>Recent task batches you have created</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {history.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">No history yet</p>
+              ) : (
+                history.map((item: any) => (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">{new Date(item.timestamp).toLocaleString()}</span>
+                      <Badge variant="secondary">{item.taskCount} tasks</Badge>
+                    </div>
+                    <ul className="list-disc list-inside text-sm text-muted-foreground">
+                      {item.tasks.slice(0, 3).map((t: string, i: number) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                      {item.tasks.length > 3 && <li>...and {item.tasks.length - 3} more</li>}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="pt-6">

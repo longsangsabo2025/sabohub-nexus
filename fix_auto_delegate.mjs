@@ -19,12 +19,12 @@ async function fixCompanyRecord() {
 
   try {
     // Check if CEO already has company
-    console.log(`🔍 Checking for existing company (ceo_id=${CEO_USER_ID.slice(0, 8)}...)`);
+    console.log(`🔍 Checking for existing company (owner_id=${CEO_USER_ID.slice(0, 8)}...)`);
     
     const { data: existingCompany, error: checkError } = await supabase
       .from('companies')
-      .select('id, name, ceo_id')
-      .eq('ceo_id', CEO_USER_ID)
+      .select('id, name, owner_id')
+      .eq('owner_id', CEO_USER_ID)
       .maybeSingle();
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -45,7 +45,7 @@ async function fixCompanyRecord() {
       .from('companies')
       .insert({
         name: 'SABO Tech Company',
-        ceo_id: CEO_USER_ID,
+        owner_id: CEO_USER_ID,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -68,9 +68,9 @@ async function fixCompanyRecord() {
       .select(`
         id,
         name,
-        ceo_id
+        owner_id
       `)
-      .eq('ceo_id', CEO_USER_ID)
+      .eq('owner_id', CEO_USER_ID)
       .single();
 
     if (verifyCompany) {

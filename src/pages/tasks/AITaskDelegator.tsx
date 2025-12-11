@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Sparkles, 
   Send, 
@@ -69,9 +71,40 @@ export default function AITaskDelegator() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const location = useLocation();
-  const [rawInput, setRawInput] = useState('');
-  const [parsedTasks, setParsedTasks] = useState<ParsedTask[]>([]);
+  
+  // Load initial state from localStorage
+  const [rawInput, setRawInput] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('aiTaskDelegator_rawInput') || '';
+    }
+    return '';
+  });
+  
+  const [parsedTasks, setParsedTasks] = useState<ParsedTask[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('aiTaskDelegator_parsedTasks');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved tasks:', e);
+        }
+      }
+    }
+    return [];
+  });
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Save state to localStorage
+  useEffect(() => {
+    localStorage.setItem('aiTaskDelegator_rawInput', rawInput);
+  }, [rawInput]);
+
+  useEffect(() => {
+    localStorage.setItem('aiTaskDelegator_parsedTasks', JSON.stringify(parsedTasks));
+  }, [parsedTasks]);
 
   // Auto-fill from AI Assistant's auto-delegate feature
   useEffect(() => {
@@ -287,8 +320,29 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
 
       // Create all approved tasks
       const tasksData = tasksToCreate.map(task => {
-        // Map 'urgent' priority to 'high' (schema only allows low/medium/high)
-        const validPriority = task.priority === 'urgent' ? 'high' : task.priority;
+        // Priority is lowercase in DB
+        const normalizedPriority = (task.priority || 'medium').toLowerCase().trim();
+        const validPriority = ['low', 'medium', 'high', 'urgent'].includes(normalizedPriority) 
+          ? normalizedPriority 
+          : 'medium';
+        
+        // Map category to database format (lowercase, specific allowed values)
+        const categoryMap: Record<string, string> = {
+          'operations': 'operations',
+          'maintenance': 'maintenance', 
+          'inventory': 'inventory',
+          'marketing': 'sales', // Map marketing to sales
+          'sales': 'sales',
+          'admin': 'admin',
+          'hr': 'admin', // Map hr to admin
+          'finance': 'admin', // Map finance to admin
+          'customer_service': 'customer_service',
+          'other': 'other'
+        };
+        
+        // Normalize input category: lowercase, trim, remove extra spaces
+        const normalizedCategory = (task.category || 'other').toLowerCase().trim();
+        const validCategory = categoryMap[normalizedCategory] || 'other';
         
         // Get employee details for assigned_to_name and assigned_to_role
         const assignedEmployee = task.suggestedEmployee;
@@ -297,7 +351,7 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
           company_id: company.id,
           title: task.title,
           description: `${task.description}\n\n**📋 HƯỚNG DẪN THỰC HIỆN:**\n${task.instructions.map((inst, i) => `${i + 1}. ${inst}`).join('\n')}\n\n⏱️ Ước tính: ${task.estimatedHours}h\n🤖 AI-generated task`,
-          category: task.category,
+          category: validCategory,
           priority: validPriority,
           status: 'pending',
           assigned_to: assignedEmployee?.id || null,
@@ -322,9 +376,27 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
         description: `${data.length} tasks đã giao cho nhân viên thành công`,
       });
       
+      // Save to History
+      const historyItem = {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        taskCount: data.length,
+        tasks: parsedTasks.filter(t => t.status === 'approved'),
+        originalInput: rawInput
+      };
+      
+      try {
+        const currentHistory = JSON.parse(localStorage.getItem('aiTaskDelegator_history') || '[]');
+        localStorage.setItem('aiTaskDelegator_history', JSON.stringify([historyItem, ...currentHistory].slice(0, 50)));
+      } catch (e) {
+        console.error('Failed to save history:', e);
+      }
+      
       // Reset
       setRawInput('');
       setParsedTasks([]);
+      // LocalStorage will be updated by useEffect, but we can explicitly clear if needed
+      // The useEffects will run after state update and save empty values, which is fine.
       
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -382,14 +454,20 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <Sparkles className="h-8 w-8 text-purple-600" />
-          AI Task Delegator
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Paste danh sách công việc bằng ngôn ngữ tự nhiên → AI tự động phân tích & giao việc
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Sparkles className="h-8 w-8 text-purple-600" />
+            AI Task Delegator
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Paste danh sách công việc bằng ngôn ngữ tự nhiên → AI tự động phân tích & giao việc
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => setShowHistory(true)}>
+          <Clock className="mr-2 h-4 w-4" />
+          Lịch sử
+        </Button>
       </div>
 
       {/* Stats */}
@@ -697,6 +775,77 @@ RETURN ONLY THE JSON ARRAY, NO MARKDOWN, NO EXPLANATION.`;
           </div>
         </CardContent>
       </Card>
+
+      {/* History Dialog */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Lịch sử giao việc</DialogTitle>
+            <DialogDescription>
+              Các đợt giao việc gần đây của bạn
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] pr-4">
+            <div className="space-y-4">
+              {(() => {
+                try {
+                  const history = JSON.parse(localStorage.getItem('aiTaskDelegator_history') || '[]');
+                  if (history.length === 0) {
+                    return <p className="text-center text-muted-foreground py-8">Chưa có lịch sử giao việc</p>;
+                  }
+                  return history.map((item: any) => (
+                    <Card key={item.id} className="bg-muted/50">
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-base">
+                              {new Date(item.timestamp).toLocaleString('vi-VN')}
+                            </CardTitle>
+                            <CardDescription>
+                              Đã tạo {item.taskCount} tasks
+                            </CardDescription>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setRawInput(item.originalInput);
+                              setShowHistory(false);
+                              toast({ title: 'Đã khôi phục nội dung cũ' });
+                            }}
+                          >
+                            <RefreshCw className="mr-2 h-3 w-3" />
+                            Sử dụng lại
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="text-sm">
+                        <div className="bg-background p-2 rounded border mb-2 max-h-20 overflow-hidden text-xs text-muted-foreground">
+                          {item.originalInput}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {item.tasks.slice(0, 3).map((t: any, i: number) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {t.title}
+                            </Badge>
+                          ))}
+                          {item.tasks.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{item.tasks.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ));
+                } catch (e) {
+                  return <p className="text-red-500">Lỗi đọc lịch sử</p>;
+                }
+              })()}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -6,6 +6,11 @@ import type { Attendance as AttendanceRecord } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PayrollTab from './PayrollTab';
 import { 
   Clock, 
   MapPin, 
@@ -17,6 +22,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Timer,
+  Calendar,
 } from 'lucide-react';
 import {
   Table,
@@ -53,10 +59,19 @@ export default function Attendance() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'check_in' | 'check_out' | 'break_start' | 'break_end' | null>(null);
+  
+  // Leave Request State
+  const [isLeaveRequestOpen, setIsLeaveRequestOpen] = useState(false);
+  const [leaveRequest, setLeaveRequest] = useState({
+    start_date: format(new Date(), 'yyyy-MM-dd'),
+    end_date: format(new Date(), 'yyyy-MM-dd'),
+    reason: '',
+    days: 1
+  });
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, employeeUser } = useAuth();
   
   // Enable realtime updates
   useAttendanceRealtime();
@@ -65,30 +80,57 @@ export default function Attendance() {
   const { data: attendance, isLoading } = useQuery({
     queryKey: ['attendance'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Fetch attendance without join
+      const { data: attendanceData, error } = await supabase
         .from('attendance')
-        .select('*, employees(full_name, email)')
+        .select('*')
         .order('check_in_time', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data || [];
+      if (!attendanceData || attendanceData.length === 0) return [];
+
+      // 2. Manual join for employee details
+      const employeeIds = [...new Set(attendanceData.map((a: any) => a.employee_id).filter(Boolean))];
+      
+      if (employeeIds.length > 0) {
+        const { data: employeesData } = await supabase
+          .from('employees')
+          .select('id, full_name, email')
+          .in('id', employeeIds);
+          
+        if (employeesData) {
+          const empMap = new Map(employeesData.map((e: any) => [e.id, e]));
+          return attendanceData.map((record: any) => ({
+            ...record,
+            employees: record.employee_id ? empMap.get(record.employee_id) : null
+          }));
+        }
+      }
+
+      return attendanceData;
     },
   });
 
   // Fetch current user's today attendance
   const { data: myTodayAttendance } = useQuery({
-    queryKey: ['my-attendance-today', user?.id],
+    queryKey: ['my-attendance-today', user?.id, employeeUser?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      const userId = employeeUser?.id || user?.id;
+      if (!userId) return null;
       
-      const today = format(new Date(), 'yyyy-MM-dd');
+      // Calculate start and end of today in local time, then convert to UTC for query
+      // This ensures we catch check-ins that happened early in the morning (which might be previous day in UTC)
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      
       const { data, error } = await supabase
         .from('attendance')
         .select('*')
-        .eq('employee_id', user.id)
-        .gte('check_in_time', `${today}T00:00:00`)
-        .lte('check_in_time', `${today}T23:59:59`)
+        .eq('employee_id', userId)
+        .gte('check_in_time', startOfDay.toISOString())
+        .lte('check_in_time', endOfDay.toISOString())
         .order('check_in_time', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -96,21 +138,51 @@ export default function Attendance() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!(user?.id || employeeUser?.id),
   });
 
   // Check-in mutation
   const checkIn = useMutation({
     mutationFn: async (location: GPSLocation | null) => {
+      const userId = employeeUser?.id || user?.id;
+      if (!userId) throw new Error('Không tìm thấy thông tin nhân viên');
+
+      let companyId = employeeUser?.company_id;
+      let branchId = employeeUser?.branch_id;
+      let fullName = employeeUser?.full_name;
+      let role = employeeUser?.role;
+
+      // Fallback: Try to find employee info if missing (e.g. logged in as CEO via Supabase Auth)
+      if (!companyId && user?.email) {
+        const { data: emp } = await supabase
+          .from('employees')
+          .select('company_id, branch_id, full_name, role')
+          .eq('email', user.email)
+          .maybeSingle();
+          
+        if (emp) {
+          companyId = emp.company_id;
+          branchId = emp.branch_id;
+          fullName = emp.full_name;
+          role = emp.role;
+        }
+      }
+
       const { data, error } = await supabase
         .from('attendance')
         .insert({
-          employee_id: user?.id,
+          employee_id: userId,
+          user_id: userId, // Required by schema
+          branch_id: branchId, // Required by schema
+          company_id: companyId, // Required by schema
+          check_in: new Date().toISOString(), // Legacy column support
           check_in_time: new Date().toISOString(),
           latitude: location?.latitude,
           longitude: location?.longitude,
           location: location ? `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` : null,
           status: 'present',
+          employee_name: fullName,
+          employee_role: role
         })
         .select()
         .single();
@@ -144,6 +216,7 @@ export default function Attendance() {
         .from('attendance')
         .update({
           check_out_time: new Date().toISOString(),
+          status: 'completed'
         })
         .eq('id', myTodayAttendance.id)
         .select()
@@ -242,6 +315,49 @@ export default function Attendance() {
     },
   });
 
+  // Leave Request Mutation
+  const requestLeaveMutation = useMutation({
+    mutationFn: async (data: typeof leaveRequest) => {
+      if (!employeeUser?.id) throw new Error("Không tìm thấy thông tin nhân viên");
+      
+      // Use RPC to bypass RLS for staff
+      const { data: rpcData, error } = await supabase.rpc('submit_approval_request', {
+        p_requester_id: employeeUser.id,
+        p_type: 'time_off',
+        p_details: {
+          start_date: data.start_date,
+          end_date: data.end_date,
+          reason: data.reason,
+          days: data.days,
+          company_id: employeeUser.company_id
+        }
+      });
+      
+      if (error) throw error;
+      if (rpcData && !rpcData.success) throw new Error(rpcData.error || 'Lỗi không xác định');
+    },
+    onSuccess: () => {
+      setIsLeaveRequestOpen(false);
+      setLeaveRequest({
+        start_date: format(new Date(), 'yyyy-MM-dd'),
+        end_date: format(new Date(), 'yyyy-MM-dd'),
+        reason: '',
+        days: 1
+      });
+      toast({
+        title: 'Đã gửi yêu cầu',
+        description: 'Yêu cầu nghỉ phép đã được gửi cho quản lý.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Lỗi',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Get current GPS location
   const getCurrentLocation = (): Promise<GPSLocation> => {
     return new Promise((resolve, reject) => {
@@ -318,15 +434,29 @@ export default function Attendance() {
     }
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatTime = (dateString: string | null | undefined) => {
+    if (!dateString) return '--:--';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime()) || date.getFullYear() === 1970) return '--:--';
+      return date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '--:--';
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '--/--/----';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime()) || date.getFullYear() === 1970) return '--/--/----';
+      return date.toLocaleDateString('vi-VN');
+    } catch {
+      return '--/--/----';
+    }
   };
 
   const getInitials = (name: string) => {
@@ -340,7 +470,15 @@ export default function Attendance() {
   };
 
   const getStatusBadge = (record: AttendanceRecord) => {
-    const status = record.status || (record.check_out_time ? 'completed' : 'present');
+    let status = record.status;
+    
+    // Fix display issue: If checked out but status is still 'present', show as completed
+    if (record.check_out_time && status === 'present') {
+      status = 'completed';
+    }
+    
+    status = status || (record.check_out_time ? 'completed' : 'present');
+
     const statusConfig: Record<string, { label: string; color: string }> = {
       present: { label: 'Đang làm việc', color: 'bg-green-500' },
       on_break: { label: 'Đang nghỉ', color: 'bg-yellow-500' },
@@ -382,12 +520,19 @@ export default function Attendance() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Chấm công</h2>
-          <p className="text-muted-foreground">Theo dõi chấm công của nhân viên</p>
+      <Tabs defaultValue="attendance" className="w-full">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Chấm công & Lương</h2>
+            <p className="text-muted-foreground">Quản lý chấm công và tính lương nhân viên</p>
+          </div>
+          <TabsList>
+            <TabsTrigger value="attendance">Chấm công</TabsTrigger>
+            <TabsTrigger value="payroll">Tính lương</TabsTrigger>
+          </TabsList>
         </div>
-      </div>
+
+        <TabsContent value="attendance" className="space-y-6">
 
       {/* Quick Actions for Current User */}
       <Card className="border-2 border-primary/20">
@@ -454,6 +599,16 @@ export default function Attendance() {
                 <span>Đã hoàn thành - Tổng thời gian: {getWorkDuration(myTodayAttendance!)}</span>
               </div>
             )}
+
+            {/* ELON MUSK STRATEGY: Embedded Leave Request */}
+            <Button 
+              variant="outline" 
+              className="ml-auto border-blue-200 text-blue-700 hover:bg-blue-50"
+              onClick={() => setIsLeaveRequestOpen(true)}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Xin nghỉ phép
+            </Button>
           </div>
 
           {myTodayAttendance?.location && (
@@ -544,21 +699,26 @@ export default function Attendance() {
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarFallback>
-                              {getInitials(employee?.full_name || employee?.email || 'U')}
+                              {getInitials(employee?.full_name || record.employee_name || employee?.email || 'U')}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <div className="font-medium">
-                              {employee?.full_name || employee?.email || 'Không xác định'}
+                              {employee?.full_name || record.employee_name || employee?.email || 'Không xác định'}
                             </div>
+                            {(employee?.role || record.employee_role) && (
+                              <div className="text-xs text-muted-foreground capitalize">
+                                {employee?.role || record.employee_role}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{formatDate(record.check_in_time)}</TableCell>
+                      <TableCell>{formatDate(record.check_in_time || record.check_in)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-green-500" />
-                          {formatTime(record.check_in_time)}
+                          {formatTime(record.check_in_time || record.check_in)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -652,6 +812,70 @@ export default function Attendance() {
             >
               {checkIn.isPending || checkOut.isPending ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </TabsContent>
+
+      <TabsContent value="payroll">
+        <PayrollTab />
+      </TabsContent>
+      </Tabs>
+
+      {/* Leave Request Dialog */}
+      <Dialog open={isLeaveRequestOpen} onOpenChange={setIsLeaveRequestOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xin nghỉ phép</DialogTitle>
+            <DialogDescription>
+              Gửi yêu cầu nghỉ phép cho quản lý phê duyệt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Từ ngày</Label>
+                <Input 
+                  id="start_date" 
+                  type="date" 
+                  value={leaveRequest.start_date}
+                  onChange={(e) => setLeaveRequest({...leaveRequest, start_date: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">Đến ngày</Label>
+                <Input 
+                  id="end_date" 
+                  type="date" 
+                  value={leaveRequest.end_date}
+                  onChange={(e) => setLeaveRequest({...leaveRequest, end_date: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="days">Số ngày nghỉ</Label>
+              <Input 
+                id="days" 
+                type="number" 
+                min="0.5" 
+                step="0.5"
+                value={leaveRequest.days}
+                onChange={(e) => setLeaveRequest({...leaveRequest, days: parseFloat(e.target.value)})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reason">Lý do</Label>
+              <Textarea 
+                id="reason" 
+                placeholder="Ví dụ: Việc gia đình, Ốm..."
+                value={leaveRequest.reason}
+                onChange={(e) => setLeaveRequest({...leaveRequest, reason: e.target.value})}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsLeaveRequestOpen(false)}>Hủy</Button>
+            <Button onClick={() => requestLeaveMutation.mutate(leaveRequest)}>Gửi yêu cầu</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

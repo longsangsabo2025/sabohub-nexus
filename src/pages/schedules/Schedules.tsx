@@ -7,6 +7,7 @@ import { SHIFT_CONFIG } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight, Users, Pencil, Trash2 } from 'lucide-react';
 import {
   Table,
@@ -56,12 +57,16 @@ export default function Schedules() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteScheduleId, setDeleteScheduleId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [newSchedule, setNewSchedule] = useState({
     employee_id: '',
     shift_type: 'morning' as ShiftType,
     notes: '',
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd'),
+    selectedDays: [1, 2, 3, 4, 5] as number[],
+    startTime: '',
+    endTime: '',
   });
 
   const queryClient = useQueryClient();
@@ -88,14 +93,36 @@ export default function Schedules() {
   const { data: schedules, isLoading } = useQuery({
     queryKey: ['schedules', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Fetch schedules without join
+      const { data: schedulesData, error } = await supabase
         .from('schedules')
-        .select('*, employees(full_name, email)')
+        .select('*')
         .gte('date', format(weekStart, 'yyyy-MM-dd'))
         .lte('date', format(weekEnd, 'yyyy-MM-dd'))
         .order('date');
+      
       if (error) throw error;
-      return data || [];
+      if (!schedulesData || schedulesData.length === 0) return [];
+
+      // 2. Manual join for employee details
+      const employeeIds = [...new Set(schedulesData.map((s: any) => s.employee_id).filter(Boolean))];
+      
+      if (employeeIds.length > 0) {
+        const { data: employeesData } = await supabase
+          .from('employees')
+          .select('id, full_name, email')
+          .in('id', employeeIds);
+          
+        if (employeesData) {
+          const empMap = new Map(employeesData.map((e: any) => [e.id, e]));
+          return schedulesData.map((schedule: any) => ({
+            ...schedule,
+            employees: schedule.employee_id ? empMap.get(schedule.employee_id) : null
+          }));
+        }
+      }
+
+      return schedulesData;
     },
   });
 
@@ -107,10 +134,15 @@ export default function Schedules() {
       shift_type: ShiftType;
       notes?: string;
     }) => {
+      // Find employee to get company_id and branch_id
+      const employee = employees?.find((e: any) => e.id === schedule.employee_id);
+
       const { data, error } = await supabase
         .from('schedules')
         .insert({
           ...schedule,
+          company_id: employee?.company_id,
+          branch_id: employee?.branch_id,
           status: 'scheduled',
         })
         .select()
@@ -136,6 +168,50 @@ export default function Schedules() {
     },
   });
 
+  // Bulk create schedule mutation
+  const bulkCreateSchedule = useMutation({
+    mutationFn: async (schedules: any[]) => {
+      const employee = employees?.find((e: any) => e.id === schedules[0].employee_id);
+      
+      const { data, error } = await supabase
+        .from('schedules')
+        .insert(schedules.map(s => ({
+          ...s,
+          company_id: employee?.company_id,
+          branch_id: employee?.branch_id,
+          status: 'scheduled',
+        })))
+        .select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      setIsAddDialogOpen(false);
+      setNewSchedule({
+        employee_id: '',
+        shift_type: 'morning',
+        notes: '',
+        startDate: format(new Date(), 'yyyy-MM-dd'),
+        endDate: format(new Date(), 'yyyy-MM-dd'),
+        selectedDays: [1, 2, 3, 4, 5],
+        startTime: '',
+        endTime: '',
+      });
+      toast({
+        title: 'Thành công',
+        description: `Đã thêm ${data.length} lịch làm việc`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Lỗi',
+        description: `Không thể thêm lịch: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Update schedule mutation
   const updateSchedule = useMutation({
     mutationFn: async (schedule: {
@@ -143,6 +219,8 @@ export default function Schedules() {
       employee_id: string;
       date: string;
       shift_type: ShiftType;
+      start_time?: string;
+      end_time?: string;
       status: string;
       notes?: string;
     }) => {
@@ -152,6 +230,8 @@ export default function Schedules() {
           employee_id: schedule.employee_id,
           date: schedule.date,
           shift_type: schedule.shift_type,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
           status: schedule.status,
           notes: schedule.notes,
         })
@@ -206,21 +286,49 @@ export default function Schedules() {
   });
 
   const handleAddSchedule = () => {
-    if (!selectedDate || !newSchedule.employee_id) {
+    if (!newSchedule.employee_id || !newSchedule.startDate || !newSchedule.endDate) {
       toast({
         title: 'Thiếu thông tin',
-        description: 'Vui lòng chọn nhân viên và ngày',
+        description: 'Vui lòng chọn nhân viên và khoảng thời gian',
         variant: 'destructive',
       });
       return;
     }
 
-    createSchedule.mutate({
-      employee_id: newSchedule.employee_id,
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      shift_type: newSchedule.shift_type,
-      notes: newSchedule.notes || undefined,
-    });
+    const start = new Date(newSchedule.startDate);
+    const end = new Date(newSchedule.endDate);
+    
+    if (end < start) {
+       toast({
+        title: 'Lỗi thời gian',
+        description: 'Ngày kết thúc phải sau ngày bắt đầu',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const days = eachDayOfInterval({ start, end });
+    const schedulesToCreate = days
+      .filter(day => newSchedule.selectedDays.includes(day.getDay()))
+      .map(day => ({
+        employee_id: newSchedule.employee_id,
+        date: format(day, 'yyyy-MM-dd'),
+        shift_type: newSchedule.shift_type,
+        start_time: newSchedule.startTime || undefined,
+        end_time: newSchedule.endTime || undefined,
+        notes: newSchedule.notes || undefined,
+      }));
+
+    if (schedulesToCreate.length === 0) {
+       toast({
+        title: 'Không có lịch nào được tạo',
+        description: 'Vui lòng kiểm tra lại ngày chọn và khoảng thời gian',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    bulkCreateSchedule.mutate(schedulesToCreate);
   };
 
   const handleEditSchedule = () => {
@@ -231,6 +339,8 @@ export default function Schedules() {
       employee_id: editingSchedule.employee_id,
       date: editingSchedule.date,
       shift_type: editingSchedule.shift_type,
+      start_time: editingSchedule.start_time || undefined,
+      end_time: editingSchedule.end_time || undefined,
       status: editingSchedule.status,
       notes: editingSchedule.notes || undefined,
     });
@@ -316,19 +426,78 @@ export default function Schedules() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Từ ngày</Label>
+                  <Input
+                    type="date"
+                    value={newSchedule.startDate}
+                    onChange={(e) => setNewSchedule({ ...newSchedule, startDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Đến ngày</Label>
+                  <Input
+                    type="date"
+                    value={newSchedule.endDate}
+                    onChange={(e) => setNewSchedule({ ...newSchedule, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label>Ngày</Label>
-                <Input
-                  type="date"
-                  value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
-                  onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : null)}
-                />
+                <Label>Áp dụng cho các ngày</Label>
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { label: 'T2', value: 1 },
+                    { label: 'T3', value: 2 },
+                    { label: 'T4', value: 3 },
+                    { label: 'T5', value: 4 },
+                    { label: 'T6', value: 5 },
+                    { label: 'T7', value: 6 },
+                    { label: 'CN', value: 0 },
+                  ].map((day) => (
+                    <div key={day.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`day-${day.value}`}
+                        checked={newSchedule.selectedDays.includes(day.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setNewSchedule({
+                              ...newSchedule,
+                              selectedDays: [...newSchedule.selectedDays, day.value],
+                            });
+                          } else {
+                            setNewSchedule({
+                              ...newSchedule,
+                              selectedDays: newSchedule.selectedDays.filter((d) => d !== day.value),
+                            });
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`day-${day.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {day.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Ca làm việc</Label>
                 <Select
                   value={newSchedule.shift_type}
-                  onValueChange={(value) => setNewSchedule({ ...newSchedule, shift_type: value as ShiftType })}
+                  onValueChange={(value) => {
+                    const shift = SHIFT_CONFIG[value as ShiftType];
+                    setNewSchedule({ 
+                      ...newSchedule, 
+                      shift_type: value as ShiftType,
+                      startTime: shift.startTime,
+                      endTime: shift.endTime
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -341,6 +510,24 @@ export default function Schedules() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Giờ bắt đầu</Label>
+                  <Input
+                    type="time"
+                    value={newSchedule.startTime}
+                    onChange={(e) => setNewSchedule({ ...newSchedule, startTime: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Giờ kết thúc</Label>
+                  <Input
+                    type="time"
+                    value={newSchedule.endTime}
+                    onChange={(e) => setNewSchedule({ ...newSchedule, endTime: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
@@ -355,8 +542,8 @@ export default function Schedules() {
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Hủy
               </Button>
-              <Button onClick={handleAddSchedule} disabled={createSchedule.isPending}>
-                {createSchedule.isPending ? 'Đang tạo...' : 'Tạo lịch'}
+              <Button onClick={handleAddSchedule} disabled={bulkCreateSchedule.isPending}>
+                {bulkCreateSchedule.isPending ? 'Đang tạo...' : 'Tạo lịch'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -482,7 +669,10 @@ export default function Schedules() {
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="h-3 w-3" />
-                        {SHIFT_CONFIG[schedule.shift_type].startTime} - {SHIFT_CONFIG[schedule.shift_type].endTime}
+                        {schedule.start_time && schedule.end_time 
+                          ? `${schedule.start_time.slice(0, 5)} - ${schedule.end_time.slice(0, 5)}`
+                          : `${SHIFT_CONFIG[schedule.shift_type].startTime} - ${SHIFT_CONFIG[schedule.shift_type].endTime}`
+                        }
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(schedule.status)}</TableCell>
@@ -550,7 +740,15 @@ export default function Schedules() {
                 <Label>Ca làm việc</Label>
                 <Select
                   value={editingSchedule.shift_type}
-                  onValueChange={(value) => setEditingSchedule({ ...editingSchedule, shift_type: value as ShiftType })}
+                  onValueChange={(value) => {
+                    const shift = SHIFT_CONFIG[value as ShiftType];
+                    setEditingSchedule({ 
+                      ...editingSchedule, 
+                      shift_type: value as ShiftType,
+                      start_time: shift.startTime,
+                      end_time: shift.endTime
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -563,6 +761,24 @@ export default function Schedules() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Giờ bắt đầu</Label>
+                  <Input
+                    type="time"
+                    value={editingSchedule.start_time || ''}
+                    onChange={(e) => setEditingSchedule({ ...editingSchedule, start_time: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Giờ kết thúc</Label>
+                  <Input
+                    type="time"
+                    value={editingSchedule.end_time || ''}
+                    onChange={(e) => setEditingSchedule({ ...editingSchedule, end_time: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Trạng thái</Label>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -38,15 +39,22 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [assigneeId, setAssigneeId] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, employeeUser } = useAuth();
 
   // Fetch employees for assignee selector
   const { data: employees } = useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', employeeUser?.company_id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('employees')
         .select('id, full_name, email, role')
         .order('full_name');
+      
+      if (employeeUser?.company_id) {
+        query = query.eq('company_id', employeeUser.company_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -54,8 +62,18 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
 
   const { mutate: createTask, isPending } = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Chưa đăng nhập');
+      // Determine creator ID
+      let creatorId = user?.id;
+      
+      if (!creatorId && employeeUser) {
+        // If logged in as employee, we need to handle created_by.
+        // Since tasks.created_by is a UUID but usually references auth.users,
+        // and employees.id is a UUID, we can store it there IF there is no FK constraint.
+        // We verified there is NO FK constraint on created_by in tasks table.
+        creatorId = employeeUser.id;
+      }
+
+      if (!creatorId) throw new Error('Chưa đăng nhập');
 
       const { data, error } = await supabase
         .from('tasks')
@@ -66,8 +84,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           priority,
           category,
           due_date: dueDate || null,
-          created_by: user.id,
+          created_by: creatorId,
           assigned_to: assigneeId && assigneeId !== 'unassigned' ? assigneeId : null,
+          company_id: employeeUser?.company_id // Ensure task is created in the correct company
         })
         .select()
         .single();
@@ -191,10 +210,12 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="sales">Kinh doanh</SelectItem>
+                    <SelectItem value="admin">Hành chính</SelectItem>
                     <SelectItem value="operations">Vận hành</SelectItem>
                     <SelectItem value="maintenance">Bảo trì</SelectItem>
                     <SelectItem value="inventory">Kho hàng</SelectItem>
-                    <SelectItem value="customerService">Khách hàng</SelectItem>
+                    <SelectItem value="customer_service">Khách hàng</SelectItem>
                     <SelectItem value="other">Khác</SelectItem>
                   </SelectContent>
                 </Select>

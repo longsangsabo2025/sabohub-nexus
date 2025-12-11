@@ -24,6 +24,8 @@ import {
   FileSpreadsheet,
   GitBranch,
   Bot,
+  AlertTriangle,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -51,7 +53,9 @@ interface NavItem {
 const allNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'CEO Dashboard', href: '/ceo/dashboard', icon: LayoutDashboard, roles: ['ceo'] },
+  { title: 'SABO Billiards', href: '/sabo-billiards', icon: Target, roles: ['ceo', 'manager'] },
   { title: 'AI Assistant', href: '/ai-assistant', icon: Bot, roles: ['ceo'] },
+  { title: 'TT Vận hành', href: '/operations', icon: Zap, roles: ['ceo', 'manager'] },
   { title: 'Custom Dashboard', href: '/custom-dashboard', icon: Layout, roles: ['ceo'] },
   { title: 'Strategic KPI', href: '/strategic-kpi', icon: Target, roles: ['ceo', 'manager'] },
   { title: 'OKR', href: '/okr', icon: Target, roles: ['ceo', 'manager'] },
@@ -59,10 +63,11 @@ const allNavItems: NavItem[] = [
   { title: 'AI Insights', href: '/insights', icon: Lightbulb, roles: ['ceo', 'manager'] },
   { title: 'Automation', href: '/automation', icon: Workflow, roles: ['ceo', 'manager'] },
   { title: 'Auto Reports', href: '/automated-reports', icon: FileSpreadsheet, roles: ['ceo', 'manager'] },
+  { title: 'Báo cáo tổng hợp', href: '/executive-reports', icon: FileSpreadsheet, roles: ['ceo', 'manager'] },
   { title: 'Business Process', href: '/business-processes', icon: GitBranch, roles: ['ceo', 'manager'] },
   { title: 'Notifications', href: '/smart-notifications', icon: Bell },
   { title: 'Phê duyệt', href: '/approvals', icon: FileCheck, roles: ['ceo', 'manager'] },
-  { title: 'Tài chính', href: '/financial', icon: DollarSign, roles: ['ceo'] },
+  { title: 'Tài chính', href: '/financial', icon: DollarSign, roles: ['ceo', 'manager'] },
   { title: 'Nhân viên', href: '/employees', icon: Users, roles: ['ceo', 'manager'] },
   { title: 'Công việc', href: '/tasks', icon: CheckSquare },
   { title: 'Chấm công', href: '/attendance', icon: Clock },
@@ -71,6 +76,7 @@ const allNavItems: NavItem[] = [
   { title: 'KPI', href: '/kpi', icon: Target },
   { title: 'Thống kê', href: '/reports', icon: BarChart3, roles: ['ceo', 'manager'] },
   { title: 'Tài liệu', href: '/documents', icon: FileText },
+  { title: 'Báo cáo lỗi', href: '/bug-reports', icon: AlertTriangle },
   { title: 'Cài đặt', href: '/settings', icon: Settings, roles: ['ceo', 'manager'] },
 ];
 
@@ -81,6 +87,7 @@ const staffNavItems: NavItem[] = [
   { title: 'Chấm công', href: '/attendance', icon: Clock },
   { title: 'Lịch làm việc', href: '/schedules', icon: Calendar },
   { title: 'Báo cáo ngày', href: '/daily-reports', icon: FileCheck },
+  { title: 'Báo cáo lỗi', href: '/bug-reports', icon: AlertTriangle },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -102,6 +109,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       if (!item.roles) return true;
       return item.roles.includes(currentRole);
     });
+  }, [currentRole]);
+
+  // Define Priority Tabs per Role
+  const priorityTabs = useMemo(() => {
+    if (currentRole === 'ceo') {
+      return ['/ceo/dashboard', '/financial', '/ai-assistant', '/reports', '/approvals'];
+    }
+    if (currentRole === 'manager') {
+      return ['/dashboard', '/tasks', '/attendance', '/daily-reports', '/operations'];
+    }
+    return ['/staff/dashboard', '/tasks', '/attendance', '/daily-reports'];
   }, [currentRole]);
 
   const handleSignOut = async () => {
@@ -154,20 +172,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.href;
+                    const isPriority = priorityTabs.includes(item.href);
+                    
                     return (
                       <li key={item.title}>
                         <Link
                           to={item.href}
                           data-testid={`nav-${item.href.replace('/', '-')}`}
                           className={cn(
-                            'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold',
+                            'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all duration-200',
                             isActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                              ? 'bg-primary text-primary-foreground shadow-md'
+                              : isPriority 
+                                ? 'bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-900 hover:from-violet-100 hover:to-fuchsia-100 border border-violet-200 shadow-sm' 
+                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                           )}
                         >
-                          <Icon className="h-6 w-6 shrink-0" />
+                          <Icon className={cn("h-6 w-6 shrink-0", isPriority && !isActive && "text-violet-600")} />
                           {item.title}
+                          {isPriority && !isActive && (
+                            <span className="ml-auto h-2 w-2 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.6)]" />
+                          )}
                         </Link>
                       </li>
                     );
@@ -200,20 +225,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {navItems.map((item) => {
                       const Icon = item.icon;
                       const isActive = location.pathname === item.href;
+                      const isPriority = priorityTabs.includes(item.href);
+
                       return (
                         <li key={item.title}>
                           <Link
                             to={item.href}
                             data-testid={`nav-mobile-${item.href.replace(/\//g, '-')}`}
                             className={cn(
-                              'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold',
+                              'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all duration-200',
                               isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                                ? 'bg-primary text-primary-foreground shadow-md'
+                                : isPriority 
+                                  ? 'bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-900 hover:from-violet-100 hover:to-fuchsia-100 border border-violet-200 shadow-sm' 
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                             )}
                           >
-                            <Icon className="h-6 w-6 shrink-0" />
+                            <Icon className={cn("h-6 w-6 shrink-0", isPriority && !isActive && "text-violet-600")} />
                             {item.title}
+                            {isPriority && !isActive && (
+                              <span className="ml-auto h-2 w-2 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.6)]" />
+                            )}
                           </Link>
                         </li>
                       );

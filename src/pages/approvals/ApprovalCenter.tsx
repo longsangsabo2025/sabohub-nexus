@@ -47,84 +47,8 @@ interface ApprovalRequest {
   updated_at: string;
 }
 
-// Mock data (will be replaced with real DB)
-const mockApprovals: ApprovalRequest[] = [
-  {
-    id: '1',
-    type: 'time_off',
-    requester_id: 'emp1',
-    requester_name: 'Nguyễn Văn A',
-    status: 'pending',
-    details: {
-      start_date: '2025-12-15',
-      end_date: '2025-12-17',
-      days: 3,
-      reason: 'Nghỉ phép năm',
-    },
-    created_at: '2025-12-09T08:00:00',
-    updated_at: '2025-12-09T08:00:00',
-  },
-  {
-    id: '2',
-    type: 'expense',
-    requester_id: 'emp2',
-    requester_name: 'Trần Thị B',
-    status: 'pending',
-    details: {
-      amount: 2500000,
-      category: 'Client Meeting',
-      description: 'Ăn trưa với khách hàng X',
-      receipt_url: '#',
-    },
-    created_at: '2025-12-08T14:30:00',
-    updated_at: '2025-12-08T14:30:00',
-  },
-  {
-    id: '3',
-    type: 'time_off',
-    requester_id: 'emp3',
-    requester_name: 'Lê Văn C',
-    status: 'pending',
-    details: {
-      start_date: '2025-12-20',
-      end_date: '2025-12-20',
-      days: 1,
-      reason: 'Việc gia đình',
-    },
-    created_at: '2025-12-07T10:15:00',
-    updated_at: '2025-12-07T10:15:00',
-  },
-  {
-    id: '4',
-    type: 'expense',
-    requester_id: 'emp4',
-    requester_name: 'Phạm Thị D',
-    status: 'approved',
-    details: {
-      amount: 850000,
-      category: 'Transportation',
-      description: 'Taxi đi gặp client',
-    },
-    created_at: '2025-12-05T16:00:00',
-    updated_at: '2025-12-06T09:00:00',
-  },
-  {
-    id: '5',
-    type: 'time_off',
-    requester_id: 'emp5',
-    requester_name: 'Hoàng Văn E',
-    status: 'rejected',
-    details: {
-      start_date: '2025-12-10',
-      end_date: '2025-12-12',
-      days: 3,
-      reason: 'Du lịch',
-      rejection_reason: 'Đang peak season, team thiếu người',
-    },
-    created_at: '2025-12-01T11:00:00',
-    updated_at: '2025-12-02T08:30:00',
-  },
-];
+// Mock data removed - using real Supabase data
+
 
 // Approval Card Component
 const ApprovalCard = ({ 
@@ -353,44 +277,175 @@ const StatsCard = ({
 };
 
 export default function ApprovalCenter() {
-  const { currentRole } = useAuth();
+  const { currentRole, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('pending');
 
-  // For now, use mock data (will be replaced with real DB query)
-  const approvals = mockApprovals;
+  // Fetch approvals from Supabase
+  const { data: approvals = [], isLoading } = useQuery({
+    queryKey: ['approval-requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('approval_requests')
+        .select(`
+          *,
+          employees:requester_id (
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching approvals:', error);
+        throw error;
+      }
+      
+      return data.map((item: any) => ({
+        ...item,
+        requester_name: item.employees?.full_name || 'Unknown'
+      })) as ApprovalRequest[];
+    },
+    enabled: !!user && (currentRole === 'ceo' || currentRole === 'manager')
+  });
 
   const pendingApprovals = approvals.filter(a => a.status === 'pending');
   const approvedApprovals = approvals.filter(a => a.status === 'approved');
   const rejectedApprovals = approvals.filter(a => a.status === 'rejected');
 
-  // Approve mutation (mock - will connect to DB)
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // 1. Get the request details first
+      const { data: request, error: fetchError } = await supabase
+        .from('approval_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+
+      // 2. If it's an expense, insert into financial_transactions
+      if (request.type === 'expense') {
+        const { error: insertError } = await supabase
+          .from('financial_transactions')
+          .insert({
+            company_id: request.details.company_id,
+            date: request.details.date,
+            type: 'expense',
+            amount: request.details.amount,
+            category: request.details.category,
+            description: request.details.description,
+            created_by: request.requester_id
+          });
+        
+        if (insertError) throw insertError;
+      }
+
+      // 3. Update status to approved
+      const { error } = await supabase
+        .from('approval_requests')
+        .update({ 
+          status: 'approved',
+          approver_id: user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['approval-requests'] });
+      // Also invalidate financial stats if we just approved an expense
+      queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
+      toast({
+        title: 'Đã phê duyệt',
+        description: 'Yêu cầu đã được phê duyệt thành công',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể phê duyệt yêu cầu: ' + error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase
+        .from('approval_requests')
+        .update({ 
+          status: 'rejected',
+          rejection_reason: reason,
+          approver_id: user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['approval-requests'] });
+      toast({
+        title: 'Đã từ chối',
+        description: 'Yêu cầu đã bị từ chối',
+        variant: 'destructive',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể từ chối yêu cầu: ' + error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Batch approve mutation
+  const batchApproveMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('approval_requests')
+        .update({ 
+          status: 'approved',
+          approver_id: user?.id,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', ids);
+      
+      if (error) throw error;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['approval-requests'] });
+      toast({
+        title: 'Đã duyệt tất cả',
+        description: `Đã phê duyệt ${variables.length} yêu cầu`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể phê duyệt các yêu cầu: ' + error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
   const handleApprove = (id: string) => {
-    toast({
-      title: 'Đã phê duyệt',
-      description: 'Yêu cầu đã được phê duyệt thành công',
-    });
-    // TODO: Call Supabase to update approval status
+    approveMutation.mutate(id);
   };
 
-  // Reject mutation (mock - will connect to DB)
   const handleReject = (id: string, reason: string) => {
-    toast({
-      title: 'Đã từ chối',
-      description: 'Yêu cầu đã bị từ chối',
-      variant: 'destructive',
-    });
-    // TODO: Call Supabase to update approval status with rejection reason
+    rejectMutation.mutate({ id, reason });
   };
 
-  // Approve all pending
   const handleApproveAll = () => {
-    toast({
-      title: 'Đã duyệt tất cả',
-      description: `Đã phê duyệt ${pendingApprovals.length} yêu cầu`,
-    });
-    // TODO: Batch approve all pending requests
+    const pendingIds = pendingApprovals.map(a => a.id);
+    if (pendingIds.length === 0) return;
+    batchApproveMutation.mutate(pendingIds);
   };
 
   // Access control
@@ -401,6 +456,30 @@ export default function ApprovalCenter() {
           <AlertCircle className="h-16 w-16 mx-auto text-yellow-500 mb-4" />
           <h2 className="text-2xl font-bold mb-2">Không có quyền truy cập</h2>
           <p className="text-muted-foreground mb-6">Trang này chỉ dành cho CEO và Manager</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-48" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
         </div>
       </div>
     );

@@ -29,10 +29,12 @@ export const TASK_PRIORITY = {
 } as const;
 
 export const TASK_CATEGORIES = {
+  SALES: 'sales',
+  ADMIN: 'admin',
   OPERATIONS: 'operations',
   MAINTENANCE: 'maintenance',
   INVENTORY: 'inventory',
-  CUSTOMER_SERVICE: 'customerService',
+  CUSTOMER_SERVICE: 'customer_service',
   OTHER: 'other',
 } as const;
 
@@ -70,10 +72,12 @@ export const PRIORITY_LABELS: Record<string, string> = {
 
 // Category labels
 export const CATEGORY_LABELS: Record<string, string> = {
+  sales: 'Kinh doanh',
+  admin: 'Hành chính',
   operations: 'Vận hành',
   maintenance: 'Bảo trì',
   inventory: 'Kho hàng',
-  customerService: 'Khách hàng',
+  customer_service: 'Khách hàng',
   other: 'Khác',
 };
 
