@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { handleReactQueryError, ErrorCategory } from '@/lib/error-handling';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const { user, employeeUser } = useAuth();
 
   // Fetch employees for assignee selector
-  const { data: employees } = useQuery({
+  const { data: employees, error: employeesError } = useQuery({
     queryKey: ['employees', employeeUser?.company_id],
     queryFn: async () => {
       let query = supabase
@@ -59,6 +60,20 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       return data || [];
     },
   });
+
+  // Handle employees query error
+  if (employeesError) {
+    const message = handleReactQueryError(employeesError, {
+      category: ErrorCategory.DATABASE,
+      context: 'Failed to fetch employees',
+      operation: 'fetchEmployees',
+    });
+    toast({
+      title: 'Lỗi',
+      description: message,
+      variant: 'destructive',
+    });
+  }
 
   const { mutate: createTask, isPending } = useMutation({
     mutationFn: async () => {
@@ -112,9 +127,15 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       setAssigneeId('');
     },
     onError: (error: Error) => {
+      const message = handleReactQueryError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to create task',
+        operation: 'createTask',
+        userId: user?.id || employeeUser?.id,
+      });
       toast({
         title: 'Lỗi',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     },
@@ -238,9 +259,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Chưa giao</SelectItem>
-                  {employees?.map((emp) => (
+                  {employees?.map((emp: { id: string; full_name: string | null; email: string; role: string | null }) => (
                     <SelectItem key={emp.id} value={emp.id}>
-                      {emp.full_name || emp.email} ({emp.role})
+                      {emp.full_name || emp.email} ({emp.role || 'N/A'})
                     </SelectItem>
                   ))}
                 </SelectContent>

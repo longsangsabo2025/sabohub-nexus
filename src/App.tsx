@@ -55,6 +55,36 @@ const CEOAssistant = lazy(() => import('./pages/ai-assistant/CEOAssistant'));
 // SABO Billiards Hub
 const SaboBilliardsHub = lazy(() => import('./components/sabo-billiards/SaboBilliardsHub').then(module => ({ default: module.SaboBilliardsHub })));
 
+// Odori Modules - Multi-tenant B2B Foundation
+const Customers = lazy(() => import('./pages/customers/Customers'));
+const Products = lazy(() => import('./pages/products/Products'));
+const Inventory = lazy(() => import('./pages/inventory/Inventory'));
+const SalesOrders = lazy(() => import('./pages/orders/SalesOrders'));
+const Receivables = lazy(() => import('./pages/receivables/Receivables'));
+const Deliveries = lazy(() => import('./pages/deliveries/Deliveries'));
+
+// Manufacturing Modules - Odori Manufacturing Foundation
+const Suppliers = lazy(() => import('./pages/manufacturing/SuppliersPage'));
+const Materials = lazy(() => import('./pages/manufacturing/MaterialsPage'));
+const BOM = lazy(() => import('./pages/manufacturing/BOMPage'));
+const PurchaseOrders = lazy(() => import('./pages/manufacturing/PurchaseOrdersPage'));
+const ProductionOrders = lazy(() => import('./pages/manufacturing/ProductionOrdersPage'));
+const Payables = lazy(() => import('./pages/manufacturing/PayablesPage'));
+
+// DMS (Distribution Management System) Modules
+const DistributorPortal = lazy(() => import('./pages/distributor-portal/DistributorPortal'));
+const PriceLists = lazy(() => import('./pages/distributor-portal/PriceLists'));
+const SellThroughAnalytics = lazy(() => import('./pages/sell-through/SellThroughAnalytics'));
+const SalesRoutes = lazy(() => import('./pages/sales-routes/SalesRoutes'));
+const ChartOfAccounts = lazy(() => import('./pages/accounting/ChartOfAccounts'));
+const JournalEntries = lazy(() => import('./pages/accounting/JournalEntries'));
+
+// Shift Leader Dashboard
+const ShiftLeaderDashboard = lazy(() => import('./pages/shift-leader/ShiftLeaderDashboard'));
+
+// Odori Notification List Page
+const OdoriNotificationListPage = lazy(() => import('./components/modules/OdoriNotificationCenter').then(module => ({ default: module.OdoriNotificationList })));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -376,6 +406,216 @@ const AppWithAnalytics = () => {
             <ProtectedRoute allowedRoles={['ceo', 'manager']}>
               <DashboardLayout>
                 <SaboBilliardsHub />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Odori Modules - Multi-tenant B2B Foundation */}
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Customers />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Products />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Inventory />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <SalesOrders />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receivables"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Receivables />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/deliveries"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Deliveries />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Manufacturing Modules - Odori Manufacturing Foundation */}
+        <Route
+          path="/manufacturing/suppliers"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Suppliers />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/materials"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Materials />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/bom"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <BOM />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/purchase-orders"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <PurchaseOrders />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/production-orders"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ProductionOrders />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/payables"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Payables />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* DMS (Distribution Management System) Modules */}
+        <Route
+          path="/dms/distributor-portal"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <DistributorPortal />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dms/price-lists"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <PriceLists />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dms/sell-through"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <SellThroughAnalytics />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dms/sales-routes"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <SalesRoutes />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dms/accounting/chart-of-accounts"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ChartOfAccounts />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dms/accounting/journal-entries"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <JournalEntries />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Shift Leader Routes */}
+        <Route
+          path="/shift-leader"
+          element={
+            <ProtectedRoute allowedRoles={['ceo', 'manager', 'shift_leader']}>
+              <DashboardLayout>
+                <ShiftLeaderDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Odori Notifications Page */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <OdoriNotificationListPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

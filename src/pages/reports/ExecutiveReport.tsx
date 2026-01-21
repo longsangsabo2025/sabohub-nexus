@@ -27,6 +27,7 @@ import {
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { useErrorHandler, ErrorCategory } from '@/hooks/use-error-handler';
 
 interface ExecutiveReport {
   id: string;
@@ -46,6 +47,7 @@ interface ExecutiveReport {
 export default function ExecutiveReport() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { handleError } = useErrorHandler();
   const [selectedReport, setSelectedReport] = useState<ExecutiveReport | null>(null);
 
   // Fetch reports list
@@ -82,10 +84,10 @@ export default function ExecutiveReport() {
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể tạo báo cáo: ' + error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to generate executive report',
+        operation: 'generateExecutiveReport',
       });
     },
   });

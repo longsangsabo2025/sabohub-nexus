@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { SaboRole } from '@/constants/roles';
 import { FullPageLoading } from '@/components/ui/loading';
 
 interface ProtectedRouteProps {
@@ -9,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { isAuthenticated, currentRole, loading, employeeUser, user } = useAuth();
+  const { isAuthenticated, currentRole, loading } = useAuth();
 
   if (loading) {
     return <FullPageLoading loadingText="Đang kiểm tra xác thực..." />;
@@ -23,7 +24,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   // Check role-based access if allowedRoles specified
   if (allowedRoles && currentRole && !allowedRoles.includes(currentRole)) {
     // Redirect staff to their limited dashboard
-    if (currentRole === 'staff' || currentRole === 'shift_leader') {
+    if (currentRole === SaboRole.staff || currentRole === SaboRole.shiftLeader) {
       return <Navigate to="/staff/dashboard" replace />;
     }
     return <Navigate to="/dashboard" replace />;

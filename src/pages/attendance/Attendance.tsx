@@ -46,6 +46,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, differenceInMinutes, differenceInHours } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useErrorHandler, ErrorCategory } from '@/hooks/use-error-handler';
 
 interface GPSLocation {
   latitude: number;
@@ -72,6 +73,7 @@ export default function Attendance() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user, employeeUser } = useAuth();
+  const { handleError } = useErrorHandler();
   
   // Enable realtime updates
   useAttendanceRealtime();
@@ -199,10 +201,11 @@ export default function Attendance() {
       setShowLocationDialog(false);
     },
     onError: (error) => {
-      toast({
-        title: 'Lỗi chấm công',
-        description: error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to check in',
+        operation: 'checkIn',
+        userId: employeeUser?.id || user?.id,
       });
     },
   });
@@ -234,10 +237,11 @@ export default function Attendance() {
       setShowLocationDialog(false);
     },
     onError: (error) => {
-      toast({
-        title: 'Lỗi chấm công',
-        description: error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to check out',
+        operation: 'checkOut',
+        userId: employeeUser?.id || user?.id,
       });
     },
   });
@@ -268,10 +272,11 @@ export default function Attendance() {
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Lỗi',
-        description: error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to start break',
+        operation: 'startBreak',
+        userId: employeeUser?.id || user?.id,
       });
     },
   });
@@ -307,10 +312,11 @@ export default function Attendance() {
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Lỗi',
-        description: error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to end break',
+        operation: 'endBreak',
+        userId: employeeUser?.id || user?.id,
       });
     },
   });
@@ -350,10 +356,11 @@ export default function Attendance() {
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Lỗi',
-        description: error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to submit leave request',
+        operation: 'requestLeave',
+        userId: employeeUser?.id || user?.id,
       });
     }
   });

@@ -137,7 +137,7 @@ function RecentActivity() {
   );
 }
 
-export default function Dashboard() {
+function Dashboard() {
   const { currentRole } = useAuth();
   const navigate = useNavigate();
 
@@ -228,3 +228,4 @@ export default function Dashboard() {
   );
 }
 
+export default Dashboard;

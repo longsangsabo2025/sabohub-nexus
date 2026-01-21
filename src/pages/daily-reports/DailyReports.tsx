@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useDailyReportsRealtime } from '@/hooks/useRealtime';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useErrorHandler, ErrorCategory } from '@/hooks/use-error-handler';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +66,7 @@ export default function DailyReports() {
   const { toast } = useToast();
   const { user, employeeUser } = useAuth();
   const queryClient = useQueryClient();
+  const { handleError } = useErrorHandler();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -346,10 +348,11 @@ export default function DailyReports() {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: '❌ Lỗi',
-        description: error.message,
-        variant: 'destructive',
+      handleError(error, {
+        category: ErrorCategory.DATABASE,
+        context: 'Failed to update daily report',
+        operation: 'updateDailyReport',
+        userId: employeeUser?.id || user?.id,
       });
     },
   });

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { SaboRole } from '@/constants/roles';
 
 // Employee user type (from employees table, not Supabase Auth)
 export interface EmployeeUser {
@@ -10,13 +11,13 @@ export interface EmployeeUser {
   full_name: string;
   email: string | null;
   phone: string | null;
-  role: 'CEO' | 'MANAGER' | 'SHIFT_LEADER' | 'STAFF';
+  role: SaboRole;
   branch_id: string | null;
   avatar_url: string | null;
 }
 
-// User role enum
-export type UserRole = 'ceo' | 'manager' | 'shift_leader' | 'staff';
+// User role type (alias to SaboRole for compatibility)
+export type UserRole = SaboRole;
 
 interface AuthContextType {
   // Supabase Auth user (CEO/Admin login via email)
@@ -105,12 +106,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Get current role from either auth system
   const getCurrentRole = (): UserRole | null => {
     if (employeeUser) {
-      return employeeUser.role.toLowerCase() as UserRole;
+      return employeeUser.role;
     }
     if (user) {
       // Get role from users table via user metadata or default to manager
       const role = user.user_metadata?.role || 'manager';
-      return role.toLowerCase() as UserRole;
+      return SaboRole.fromString(role);
     }
     return null;
   };
